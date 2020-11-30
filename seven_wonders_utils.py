@@ -2,6 +2,7 @@ import cv2
 import os
 import random
 import numpy as np
+from itertools import cycle
 
 class SevenWondersPrvyVek:
 
@@ -13,15 +14,20 @@ class SevenWondersPrvyVek:
     horny_okraj = 50        # o kolko zhora posunieme herny plan
     herne_karty = []        # sa zistuje v "vyber_herne_karty"
     herne_karty_meno = []   # sa zistuje v "vyber_herne_karty"
-    herne_karty_alias = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s",
-                         "t"]
+    herne_karty_alias = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t"]
 
     tah = 0
+    aktivny_hrac = cycle(["Jany", "Mima"])
+
 
     def __init__(self):
 
         self.zisti_rohy()
         self.vyber_herne_karty()
+        cv2.namedWindow("7wonders")
+        cv2.moveWindow("7wonders", int(self.monitor_sirka - self.monitor_sirka*0.97), int(self.monitor_vyska - self.monitor_vyska*0.94))
+
+        #   startuj prve kolo hry, ktore bude nasledne volat dalsie
         self.nakresli_vek()
 
     def zisti_rohy(self):
@@ -66,26 +72,49 @@ class SevenWondersPrvyVek:
 
     def nakresli_vek(self):
         self.tah = self.tah + 1
+        hrac = next(self.aktivny_hrac)
+        img = np.zeros((self.monitor_vyska, self.monitor_sirka, 3), np.uint8)
+        cv2.putText(img, f"Toto je 7 Wonders DUEL - tah: {self.tah}, hrac: {hrac}", (self.lavy_okraj[14]-50, 35), cv2.FONT_HERSHEY_DUPLEX, 1.2, (0, 255, 0), 3)
+
         #   nakresli karty
 
-        img = np.zeros((self.monitor_vyska, self.monitor_sirka, 3), np.uint8)
         horny_okraj = self.horny_okraj
         for i in range(0, len(self.herne_karty)):
+
+            #   nastav hodnotu horneho okraja, aby sa karty poukladali do riadkov
+
             if i in [2, 5, 9, 14]:
                 horny_okraj = horny_okraj + int(self.karta_vyska * 0.8)
 
-            if i not in [2, 3, 4, 9, 10, 11, 12, 13]:
-                img[horny_okraj:horny_okraj + self.karta_vyska, self.lavy_okraj[i]:self.lavy_okraj[i] + self.karta_sirka] = self.herne_karty[i]
-                if self.herne_karty_meno[i] is not None:
-                    cv2.putText(img, self.herne_karty_alias[i], (self.lavy_okraj[i], horny_okraj+10), cv2.FONT_HERSHEY_DUPLEX, 0.8, (0, 255, 255), 2)
+            #   v riadkoch kde ma byt karta stale otocena ju nakresli otocenu, ale iba ak este nebola vybrana
 
-                print(f"Karta {i} je {self.herne_karty_meno[i]}")
+            if i not in [2, 3, 4, 9, 10, 11, 12, 13]:
+
+                #print(f"Karta {self.herne_karty_alias[i]} je {self.herne_karty_meno[i]}")
+
+                if self.herne_karty_meno[i] is not None:
+                    img[horny_okraj:horny_okraj + self.karta_vyska, self.lavy_okraj[i]:self.lavy_okraj[i] + self.karta_sirka] = self.herne_karty[i]
+                    cv2.putText(img, self.herne_karty_alias[i], (self.lavy_okraj[i], horny_okraj+10), cv2.FONT_HERSHEY_DUPLEX, 0.8, (0, 255, 255), 2)
+                else:
+                    pass
+
+            #   v ostatnych riadkoch zisti, ci karta nebola pouziva a ak nie, tak ci je validna na vyber. ak ano, zobraz ju otocenu.
+
             else:
-                print(f"Karta {i} je {self.herne_karty_meno[i]}")
-                karta = cv2.imread("karty/ine/zadna_strana_vek_3_regular.jpg")
-                karta = cv2.resize(karta, (self.karta_sirka, self.karta_vyska))
-                img[horny_okraj:horny_okraj + self.karta_vyska, self.lavy_okraj[i]:self.lavy_okraj[i] + self.karta_sirka] = karta
-                cv2.putText(img, self.herne_karty_alias[i], (self.lavy_okraj[i], horny_okraj+10), cv2.FONT_HERSHEY_DUPLEX, 0.8, (0, 255, 255), 2)
+
+                #print(f"Karta {self.herne_karty_alias[i]} je {self.herne_karty_meno[i]}")
+
+                if self.herne_karty_meno[i] is not None:
+                    if self.herne_karty_alias[i] in self.validne_karty():
+                        img[horny_okraj:horny_okraj + self.karta_vyska, self.lavy_okraj[i]:self.lavy_okraj[i] + self.karta_sirka] = self.herne_karty[i]
+                        cv2.putText(img, self.herne_karty_alias[i], (self.lavy_okraj[i], horny_okraj + 10), cv2.FONT_HERSHEY_DUPLEX, 0.8, (0, 255, 255), 2)
+                    else:
+                        karta = cv2.imread("karty/ine/zadna_strana_vek_3_regular.jpg")
+                        karta = cv2.resize(karta, (self.karta_sirka, self.karta_vyska))
+                        img[horny_okraj:horny_okraj + self.karta_vyska, self.lavy_okraj[i]:self.lavy_okraj[i] + self.karta_sirka] = karta
+                        cv2.putText(img, self.herne_karty_alias[i], (self.lavy_okraj[i], horny_okraj+10), cv2.FONT_HERSHEY_DUPLEX, 0.8, (0, 255, 255), 2)
+                else:
+                    pass
 
         print("------Begin")
         print(self.herne_karty_meno)
@@ -98,26 +127,31 @@ class SevenWondersPrvyVek:
 
         #   dokresli podpis
 
-        cv2.putText(img, f"Toto je 7 Wonders DUEL: tah {self.tah}", (self.lavy_okraj[5], 35), cv2.FONT_HERSHEY_DUPLEX, 1.2, (0, 255, 0), 3)
         cv2.putText(img, "Vytvorene Jan @ Strompl 28.10.2020", (int(self.monitor_sirka * 0.8), self.monitor_vyska - 22), cv2.FONT_HERSHEY_DUPLEX, 0.3, (0, 255, 0), 1)
         cv2.putText(img, "Aktualizovane 28.11.2020", (int(self.monitor_sirka * 0.8), self.monitor_vyska - 10), cv2.FONT_HERSHEY_DUPLEX, 0.3, (0, 255, 0), 1)
 
-        cv2.imshow("Image", img)
+        cv2.imshow("7wonders", img)
 
-        key = cv2.waitKey(0)
-        try: self.aktivuj_kartu(chr(key))
-        except: print("Nespravna volba")
+        if self.validne_karty():
+            key = cv2.waitKey(0)
+            if chr(key) in self.herne_karty_alias:
+                print(f"Aktivujem kartu {self.herne_karty_alias.index(chr(key))} s aliasom {chr(key)}")
+                self.aktivuj_kartu(chr(key))
+            else:
+                print("Nevalidny vyber.")
+                self.ukaz_error("nespravna_volba")
+                self.nakresli_vek()
+        else:
+            print("Koniec veku.")
 
     def aktivuj_kartu(self, karta):
-        print(f"Aktivujem kartu {self.herne_karty_alias.index(karta)} s aliasom {karta}")
         if karta in self.validne_karty():
-            print("Karta validna, aktivujem.")
-            self.herne_karty[self.herne_karty_alias.index(karta)] = np.zeros((self.karta_vyska, self.karta_sirka, 3), np.uint8)
             self.herne_karty_meno[self.herne_karty_alias.index(karta)] = None
             self.herne_karty_alias[self.herne_karty_alias.index(karta)] = None
             self.nakresli_vek()
         else:
-            print("Karta nevalidna.")
+            self.ukaz_error("nevalidna_karta")
+            self.nakresli_vek()
 
     def validne_karty(self):
         validne_karty = []
@@ -184,3 +218,22 @@ class SevenWondersPrvyVek:
                     if self.herne_karty_alias[19] is not None:
                         validne_karty.append(karta_alias)
         return validne_karty
+
+    def ukaz_error(self, typ_erroru):
+        next(self.aktivny_hrac)
+        self.tah = self.tah - 1
+        cv2.namedWindow("Error!")
+        if typ_erroru == "nevalidna_karta":
+            error_img = np.zeros((100, 600, 3), np.uint8)
+            cv2.putText(error_img, "Karta nie je uplne odokryta. Zvol si inu!", (10, 45), cv2.FONT_HERSHEY_COMPLEX, 0.8, (0, 0, 255), 2)
+            cv2.moveWindow("Error!", int(self.monitor_sirka/3), int(self.monitor_vyska/2))
+            cv2.imshow("Error!", error_img)
+            cv2.waitKey(2500)
+            cv2.destroyWindow("Error!")
+        if typ_erroru == "nespravna_volba":
+            error_img = np.zeros((100, 850, 3), np.uint8)
+            cv2.putText(error_img, "Nespravna volba! Mozes zvolit len z ponukanych moznosti.", (10, 45), cv2.FONT_HERSHEY_COMPLEX, 0.8, (0, 0, 255), 2)
+            cv2.moveWindow("Error!", int(self.monitor_sirka/3), int(self.monitor_vyska/2))
+            cv2.imshow("Error!", error_img)
+            cv2.waitKey(2500)
+            cv2.destroyWindow("Error!")
