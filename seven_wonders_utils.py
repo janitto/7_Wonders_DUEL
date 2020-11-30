@@ -17,7 +17,12 @@ class SevenWondersPrvyVek:
     herne_karty_alias = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t"]
 
     tah = 0
-    aktivny_hrac = cycle(["Jany", "Mima"])
+    hraci_mena = ["Jany", "Mima"]
+    hraci = cycle(hraci_mena)
+    aktivny_hrac = []
+
+    hrac_1_peniaze = 7
+    hrac_2_peniaze = 7
 
 
     def __init__(self):
@@ -72,9 +77,9 @@ class SevenWondersPrvyVek:
 
     def nakresli_vek(self):
         self.tah = self.tah + 1
-        hrac = next(self.aktivny_hrac)
+        self.aktivny_hrac = next(self.hraci)
         img = np.zeros((self.monitor_vyska, self.monitor_sirka, 3), np.uint8)
-        cv2.putText(img, f"Toto je 7 Wonders DUEL - tah: {self.tah}, hrac: {hrac}", (self.lavy_okraj[14]-50, 35), cv2.FONT_HERSHEY_DUPLEX, 1.2, (0, 255, 0), 3)
+        cv2.putText(img, f"Toto je 7 Wonders DUEL - tah: {self.tah}, hrac: {self.aktivny_hrac}", (self.lavy_okraj[14]-50, 35), cv2.FONT_HERSHEY_DUPLEX, 1.2, (0, 255, 0), 3)
 
         #   nakresli karty
 
@@ -135,8 +140,8 @@ class SevenWondersPrvyVek:
         if self.validne_karty():
             key = cv2.waitKey(0)
             if chr(key) in self.herne_karty_alias:
-                print(f"Aktivujem kartu {self.herne_karty_alias.index(chr(key))} s aliasom {chr(key)}")
-                self.aktivuj_kartu(chr(key))
+                print(f"Vybral som kartu {self.herne_karty_alias.index(chr(key))} s aliasom {chr(key)}")
+                self.vyber_kartu(chr(key))
             else:
                 print("Nevalidny vyber.")
                 self.ukaz_error("nespravna_volba")
@@ -144,8 +149,9 @@ class SevenWondersPrvyVek:
         else:
             print("Koniec veku.")
 
-    def aktivuj_kartu(self, karta):
+    def vyber_kartu(self, karta):
         if karta in self.validne_karty():
+            self.aktivuj_kartu(self.herne_karty_meno[self.herne_karty_alias.index(karta)], "predaj")
             self.herne_karty_meno[self.herne_karty_alias.index(karta)] = None
             self.herne_karty_alias[self.herne_karty_alias.index(karta)] = None
             self.nakresli_vek()
@@ -220,7 +226,7 @@ class SevenWondersPrvyVek:
         return validne_karty
 
     def ukaz_error(self, typ_erroru):
-        next(self.aktivny_hrac)
+        next(self.hraci)
         self.tah = self.tah - 1
         cv2.namedWindow("Error!")
         if typ_erroru == "nevalidna_karta":
@@ -237,3 +243,15 @@ class SevenWondersPrvyVek:
             cv2.imshow("Error!", error_img)
             cv2.waitKey(2500)
             cv2.destroyWindow("Error!")
+
+    def aktivuj_kartu(self, meno_karty, akcia):
+        if akcia == "predaj":
+            print("Predavam", meno_karty)
+            if self.aktivny_hrac == self.hraci_mena[0]:
+                self.hrac_1_peniaze = self.hrac_1_peniaze + 2
+            else:
+                self.hrac_2_peniaze = self.hrac_2_peniaze + 2
+            print("Hrac 1 ma peniaze:", self.hrac_1_peniaze)
+            print("Hrac 2 ma peniaze:", self.hrac_2_peniaze)
+
+
