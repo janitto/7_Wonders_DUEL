@@ -3,14 +3,38 @@ import os
 import random
 import numpy as np
 from itertools import cycle
+import seven_wonders_cards
 
 class SevenWondersPrvyVek:
+
+
+    myList = os.listdir("karty/cropped")
+    for karta in myList:
+        if os.path.splitext(karta)[1].lower() in ('.jpg', '.jpeg'):
+            x = karta.split(".")[0].lower()
+            exec("%s = seven_wonders_cards.%s" % (x,x))
+
 
     monitor_sirka = 1800
     monitor_vyska = 880
     karta_sirka = 80
     karta_vyska = 125
     lavy_okraj = []         # sa zistuje v "zisti_rohy"
+
+    hrac_1_horny_okraj_sivohnede = int(monitor_vyska / 2) + 15
+    hrac_1_horny_okraj_zlte = int(monitor_vyska / 2) + 15
+    hrac_1_horny_okraj_modre = int(monitor_vyska / 2) + 15
+    hrac_1_horny_okraj_cervene = int(monitor_vyska / 2) + 15
+    hrac_1_horny_okraj_zelene = int(monitor_vyska / 2) + 15
+    hrac_1_lavy_okraj = [30, 120, 210, 300, 390]
+
+    hrac_2_horny_okraj_sivohnede = int(monitor_vyska / 2) + 15
+    hrac_2_horny_okraj_zlte = int(monitor_vyska / 2) + 15
+    hrac_2_horny_okraj_modre = int(monitor_vyska / 2) + 15
+    hrac_2_horny_okraj_cervene = int(monitor_vyska / 2) + 15
+    hrac_2_horny_okraj_zelene = int(monitor_vyska / 2) + 15
+    hrac_2_lavy_okraj = [1320, 1410, 1500, 1590, monitor_sirka - 30 - karta_sirka - 10]
+
     horny_okraj = 50        # o kolko zhora posunieme herny plan
     herne_karty = []        # sa zistuje v "vyber_herne_karty"
     herne_karty_meno = []   # sa zistuje v "vyber_herne_karty"
@@ -23,6 +47,12 @@ class SevenWondersPrvyVek:
 
     hrac_1_peniaze = 7
     hrac_2_peniaze = 7
+    hrac_1_body = 0
+    hrac_2_body = 0
+    hrac_1_karty = []
+    hrac_2_karty = []
+    hrac_1_suroviny = []
+    hrac_2_suroviny = []
 
 
     def __init__(self):
@@ -37,7 +67,7 @@ class SevenWondersPrvyVek:
 
     def zisti_rohy(self):
         lavy_okraj = []
-        okraj_karty = int(self.monitor_sirka / 2 - int(self.monitor_sirka * 0.02)) - self.karta_sirka
+        okraj_karty = int(self.monitor_sirka / 2 - int(self.monitor_sirka * 0.01)) - self.karta_sirka
         lavy_okraj.append(okraj_karty)
 
         for i in range(1, 20):
@@ -79,7 +109,10 @@ class SevenWondersPrvyVek:
         self.tah = self.tah + 1
         self.aktivny_hrac = next(self.hraci)
         img = np.zeros((self.monitor_vyska, self.monitor_sirka, 3), np.uint8)
-        cv2.putText(img, f"Toto je 7 Wonders DUEL - tah: {self.tah}, hrac: {self.aktivny_hrac}", (self.lavy_okraj[14]-50, 35), cv2.FONT_HERSHEY_DUPLEX, 1.2, (0, 255, 0), 3)
+
+        #   nakresli titulok
+
+        cv2.putText(img, f"Toto je 7 Wonders DUEL - tah: {self.tah}", (self.lavy_okraj[9], 35), cv2.FONT_HERSHEY_DUPLEX, 1.2, (0, 255, 0), 3)
 
         #   nakresli karty
 
@@ -121,43 +154,111 @@ class SevenWondersPrvyVek:
                 else:
                     pass
 
-        print("------Begin")
-        print(self.herne_karty_meno)
-        print(self.herne_karty_alias)
-        print(self.validne_karty())
-        print("------End")
+        #print(self.validne_karty())
+        #print(self.hrac_1_karty)
+        #print(self.hrac_2_karty)
+        #print(self.hrac_1_peniaze)
+        #print(self.hrac_2_peniaze)
 
-        #   nakresli peniaze
+        #   nakresli zonu hraca 1 a 2 a zvyrazni aktivneho
 
+        if self.aktivny_hrac == self.hraci_mena[0]:
+            cv2.putText(img, self.hraci_mena[0], (20, int(self.monitor_vyska / 2)-10), cv2.FONT_HERSHEY_DUPLEX, 1, (0, 255, 0), 2)
+            cv2.putText(img, self.hraci_mena[1], (self.lavy_okraj[19] + 80 + self.karta_sirka, int(self.monitor_vyska / 2)-10), cv2.FONT_HERSHEY_DUPLEX, 1, (0, 255, 0), 1)
+            cv2.rectangle(img, (20, int(self.monitor_vyska / 2)), (self.lavy_okraj[14] - 40, int(self.monitor_vyska * 0.9)), (0, 0, 255), 3)
+            cv2.rectangle(img, (self.lavy_okraj[19] + 80 + self.karta_sirka, int(self.monitor_vyska / 2)), (self.monitor_sirka - 20, int(self.monitor_vyska * 0.9)), (0, 0, 255), 1)
+        else:
+            cv2.putText(img, self.hraci_mena[0], (20, int(self.monitor_vyska / 2)-10), cv2.FONT_HERSHEY_DUPLEX, 1, (0, 255, 0), 1)
+            cv2.putText(img, self.hraci_mena[1], (self.lavy_okraj[19] + 80 + self.karta_sirka, int(self.monitor_vyska / 2)-10), cv2.FONT_HERSHEY_DUPLEX, 1, (0, 255, 0), 2)
+            cv2.rectangle(img, (20, int(self.monitor_vyska / 2)), (self.lavy_okraj[14] - 40, int(self.monitor_vyska * 0.9)), (0, 0, 255), 1)
+            cv2.rectangle(img, (self.lavy_okraj[19] + 80 + self.karta_sirka, int(self.monitor_vyska / 2)), (self.monitor_sirka - 20, int(self.monitor_vyska * 0.9)), (0, 0, 255), 3)
+
+        #   nakresli peniaze a body
+        cv2.putText(img, "Pen:" +str(self.hrac_1_peniaze), (self.lavy_okraj[14] - 130, int(self.monitor_vyska / 2)-10), cv2.FONT_HERSHEY_DUPLEX, 1, (0, 255, 255), 1)
+        cv2.putText(img, "Body:" +str(self.hrac_1_body), (self.lavy_okraj[14] - 260, int(self.monitor_vyska / 2)-10), cv2.FONT_HERSHEY_DUPLEX, 1, (255, 51, 51), 1)
+        cv2.putText(img, "Pen:" + str(self.hrac_2_peniaze), (self.monitor_sirka - 130, int(self.monitor_vyska / 2)-10), cv2.FONT_HERSHEY_DUPLEX, 1, (0, 255, 255), 1)
+        cv2.putText(img, "Body:" + str(self.hrac_2_body), (self.monitor_sirka - 260, int(self.monitor_vyska / 2)-10), cv2.FONT_HERSHEY_DUPLEX, 1, (255, 51, 51), 1)
+
+        #   nakresli majetok hraca 1
+
+        sivohnedy_okraj = self.hrac_1_horny_okraj_sivohnede
+        zlty_okraj = self.hrac_1_horny_okraj_zlte
+        modry_okraj = self.hrac_1_horny_okraj_modre
+        cerveny_okraj = self.hrac_1_horny_okraj_cervene
+        zeleny_okraj = self.hrac_1_horny_okraj_zelene
+
+        for karta in self.hrac_1_karty:
+            karta_img = cv2.imread(f"karty/cropped/{karta}.jpg")
+            karta_img = cv2.resize(karta_img, (self.karta_sirka, self.karta_vyska))
+            # img[hore:dole, lavo:pravo]
+            if eval("self."+karta.lower()+".farba") == "hneda" or eval("self."+karta.lower()+".farba") == "siva":
+                img[sivohnedy_okraj:sivohnedy_okraj + self.karta_vyska, self.hrac_1_lavy_okraj[0]:self.hrac_1_lavy_okraj[0] + self.karta_sirka] = karta_img
+                sivohnedy_okraj += 25
+            elif eval("self."+karta.lower()+".farba") == "zlta":
+                img[zlty_okraj:zlty_okraj + self.karta_vyska, self.hrac_1_lavy_okraj[1]:self.hrac_1_lavy_okraj[1] + self.karta_sirka] = karta_img
+                zlty_okraj += 25
+            elif eval("self." + karta.lower() + ".farba") == "modra":
+                img[modry_okraj:modry_okraj + self.karta_vyska, self.hrac_1_lavy_okraj[2]:self.hrac_1_lavy_okraj[2] + self.karta_sirka] = karta_img
+                modry_okraj += 25
+            elif eval("self." + karta.lower() + ".farba") == "cervena":
+                img[cerveny_okraj:cerveny_okraj + self.karta_vyska, self.hrac_1_lavy_okraj[3]:self.hrac_1_lavy_okraj[3] + self.karta_sirka] = karta_img
+                cerveny_okraj += 25
+            elif eval("self." + karta.lower() + ".farba") == "zelena":
+                img[zeleny_okraj:zeleny_okraj + self.karta_vyska, self.hrac_1_lavy_okraj[4]:self.hrac_1_lavy_okraj[4] + self.karta_sirka] = karta_img
+                zeleny_okraj += 25
+
+            #   nakresli majetok hraca 2
+
+        sivohnedy_okraj = self.hrac_2_horny_okraj_sivohnede
+        zlty_okraj = self.hrac_2_horny_okraj_zlte
+        modry_okraj = self.hrac_2_horny_okraj_modre
+        cerveny_okraj = self.hrac_2_horny_okraj_cervene
+        zeleny_okraj = self.hrac_2_horny_okraj_zelene
+
+        for karta in self.hrac_2_karty:
+            karta_img = cv2.imread(f"karty/cropped/{karta}.jpg")
+            karta_img = cv2.resize(karta_img, (self.karta_sirka, self.karta_vyska))
+            # img[hore:dole, lavo:pravo]
+            if eval("self." + karta.lower() + ".farba") == "hneda" or eval(
+                    "self." + karta.lower() + ".farba") == "siva":
+                img[sivohnedy_okraj:sivohnedy_okraj + self.karta_vyska,
+                self.hrac_2_lavy_okraj[0]:self.hrac_2_lavy_okraj[0] + self.karta_sirka] = karta_img
+                sivohnedy_okraj += 25
+            elif eval("self." + karta.lower() + ".farba") == "zlta":
+                img[zlty_okraj:zlty_okraj + self.karta_vyska,
+                self.hrac_2_lavy_okraj[1]:self.hrac_2_lavy_okraj[1] + self.karta_sirka] = karta_img
+                zlty_okraj += 25
+            elif eval("self." + karta.lower() + ".farba") == "modra":
+                img[modry_okraj:modry_okraj + self.karta_vyska,
+                self.hrac_2_lavy_okraj[2]:self.hrac_2_lavy_okraj[2] + self.karta_sirka] = karta_img
+                modry_okraj += 25
+            elif eval("self." + karta.lower() + ".farba") == "cervena":
+                img[cerveny_okraj:cerveny_okraj + self.karta_vyska,
+                self.hrac_2_lavy_okraj[3]:self.hrac_2_lavy_okraj[3] + self.karta_sirka] = karta_img
+                cerveny_okraj += 25
+            elif eval("self." + karta.lower() + ".farba") == "zelena":
+                img[zeleny_okraj:zeleny_okraj + self.karta_vyska,
+                self.hrac_2_lavy_okraj[4]:self.hrac_2_lavy_okraj[4] + self.karta_sirka] = karta_img
+                zeleny_okraj += 25
 
         #   dokresli podpis
 
         cv2.putText(img, "Vytvorene Jan @ Strompl 28.10.2020", (int(self.monitor_sirka * 0.8), self.monitor_vyska - 22), cv2.FONT_HERSHEY_DUPLEX, 0.3, (0, 255, 0), 1)
-        cv2.putText(img, "Aktualizovane 28.11.2020", (int(self.monitor_sirka * 0.8), self.monitor_vyska - 10), cv2.FONT_HERSHEY_DUPLEX, 0.3, (0, 255, 0), 1)
+        cv2.putText(img, "Aktualizovane 30.11.2020", (int(self.monitor_sirka * 0.8), self.monitor_vyska - 10), cv2.FONT_HERSHEY_DUPLEX, 0.3, (0, 255, 0), 1)
 
         cv2.imshow("7wonders", img)
 
         if self.validne_karty():
             key = cv2.waitKey(0)
             if chr(key) in self.herne_karty_alias:
-                print(f"Vybral som kartu {self.herne_karty_alias.index(chr(key))} s aliasom {chr(key)}")
-                self.vyber_kartu(chr(key))
+                #print(f"Vybral som kartu {self.herne_karty_alias.index(chr(key))} s aliasom {chr(key)}")
+                self.vyber_a_aktivuj_kartu(chr(key))
             else:
                 print("Nevalidny vyber.")
                 self.ukaz_error("nespravna_volba")
                 self.nakresli_vek()
         else:
             print("Koniec veku.")
-
-    def vyber_kartu(self, karta):
-        if karta in self.validne_karty():
-            self.aktivuj_kartu(self.herne_karty_meno[self.herne_karty_alias.index(karta)], "predaj")
-            self.herne_karty_meno[self.herne_karty_alias.index(karta)] = None
-            self.herne_karty_alias[self.herne_karty_alias.index(karta)] = None
-            self.nakresli_vek()
-        else:
-            self.ukaz_error("nevalidna_karta")
-            self.nakresli_vek()
 
     def validne_karty(self):
         validne_karty = []
@@ -225,6 +326,95 @@ class SevenWondersPrvyVek:
                         validne_karty.append(karta_alias)
         return validne_karty
 
+    def vyber_a_aktivuj_kartu(self, karta):
+        if karta in self.validne_karty():
+            zvolena_karta = self.herne_karty_meno[self.herne_karty_alias.index(karta)]
+            moznost = self.zvol_mozosti(zvolena_karta)
+            self.vykonaj_akciu(zvolena_karta, moznost)
+            self.herne_karty_meno[self.herne_karty_alias.index(karta)] = None
+            self.herne_karty_alias[self.herne_karty_alias.index(karta)] = None
+            self.nakresli_vek()
+        else:
+            self.ukaz_error("nevalidna_karta")
+            self.nakresli_vek()
+
+    def zvol_mozosti(self, zvolena_karta):
+        cv2.namedWindow("Zvolena karta.")
+        zvolena_karta_pozadie = np.zeros((self.karta_vyska * 3, self.karta_sirka * 6, 3), np.uint8)
+        zvolena_karta_img = cv2.imread(f"karty/cropped/{zvolena_karta}.jpg")
+        zvolena_karta_img = cv2.resize(zvolena_karta_img, (self.karta_sirka * 2, self.karta_vyska * 2))
+        zvolena_karta_pozadie[50:50+(self.karta_vyska*2), 20:20+(self.karta_sirka*2)] = zvolena_karta_img
+        cv2.putText(zvolena_karta_pozadie, "(o) Odhod:", (int(self.karta_sirka * 2.5), 90), cv2.FONT_HERSHEY_COMPLEX, 0.7, (0, 0, 255), 1)
+        cv2.putText(zvolena_karta_pozadie, "(k) Kup:", (int(self.karta_sirka * 2.5), 150), cv2.FONT_HERSHEY_COMPLEX, 0.7, (0, 0, 255), 1)
+        cv2.putText(zvolena_karta_pozadie, "(d) Postav div:", (int(self.karta_sirka * 2.5), 210), cv2.FONT_HERSHEY_COMPLEX, 0.7, (0, 0, 255), 1)
+        cv2.putText(zvolena_karta_pozadie, "(c) Vyber inu kartu:", (int(self.karta_sirka * 2.5), 270), cv2.FONT_HERSHEY_COMPLEX, 0.7, (0, 0, 255), 1)
+        cv2.moveWindow("Zvolena karta.", int(self.monitor_sirka / 3), int(self.monitor_vyska / 2))
+        cv2.imshow("Zvolena karta.", zvolena_karta_pozadie)
+        key = cv2.waitKey()
+        if chr(key) == "o":
+            cv2.destroyWindow("Zvolena karta.")
+            return "odhod"
+        elif chr(key) == "k":
+            cv2.destroyWindow("Zvolena karta.")
+            return "kup"
+        elif chr(key) == "d":
+            cv2.destroyWindow("Zvolena karta.")
+            return "postav_div"
+        elif chr(key) == "c":
+            next(self.hraci)
+            self.tah = self.tah - 1
+            cv2.destroyWindow("Zvolena karta.")
+            self.nakresli_vek()
+        else:
+            cv2.destroyWindow("Zvolena karta.")
+            self.ukaz_error("nespravna_volba")
+            self.zvol_mozosti(zvolena_karta)
+
+    def vykonaj_akciu(self, meno_karty, akcia):
+        if akcia == "odhod":
+            print(f"{self.aktivny_hrac} ohodil {meno_karty} za {2+self.zrataj_karty(1,'zlta')} panezi.")
+            if self.aktivny_hrac == self.hraci_mena[0]:
+                self.hrac_1_peniaze = self.hrac_1_peniaze + 2 + self.zrataj_karty(1, "zlta")
+            else:
+                self.hrac_2_peniaze = self.hrac_2_peniaze + 2 + self.zrataj_karty(2, "zlta")
+
+        if akcia == "kup":
+            body_gain = eval("self." + meno_karty.lower() + ".body")
+            peniaze_gain = eval("self." + meno_karty.lower() + ".peniaze")
+
+            if self.aktivny_hrac == self.hraci_mena[0]:
+                if self.mozem_kupit(1, meno_karty):
+                    print(f"{self.aktivny_hrac} kupuje {meno_karty}.")
+                    self.hrac_1_body += body_gain
+                    self.hrac_1_peniaze += peniaze_gain
+                    if eval("self."+meno_karty.lower()+".farba") == "hneda" or eval("self."+meno_karty.lower()+".farba") == "siva":
+                        self.hrac_1_suroviny += eval("self." + meno_karty.lower() + ".suroviny")
+                    self.hrac_1_karty.append(meno_karty)
+                else:
+                    self.ukaz_error("nedostatok_penazi")
+                    self.nakresli_vek()
+            else:
+                self.hrac_2_body += body_gain
+                self.hrac_2_peniaze += peniaze_gain
+                self.hrac_2_karty.append(meno_karty)
+
+    def zrataj_karty(self, hrac, farba):
+        count = 0
+        for meno_karty in eval("self.hrac_"+str(hrac)+"_karty"):
+            if eval("self."+meno_karty.lower()+".farba") == farba:
+                count = count +1
+        return count
+
+    def mozem_kupit(self, aktivny_hrac, meno_karty):
+        cena = eval("self." + meno_karty.lower() + ".cena")
+        if cena == 0:
+            return True
+        else:
+            if aktivny_hrac == "1":
+                return True
+            else:
+                return True
+
     def ukaz_error(self, typ_erroru):
         next(self.hraci)
         self.tah = self.tah - 1
@@ -239,19 +429,17 @@ class SevenWondersPrvyVek:
         if typ_erroru == "nespravna_volba":
             error_img = np.zeros((100, 850, 3), np.uint8)
             cv2.putText(error_img, "Nespravna volba! Mozes zvolit len z ponukanych moznosti.", (10, 45), cv2.FONT_HERSHEY_COMPLEX, 0.8, (0, 0, 255), 2)
+            cv2.moveWindow("Error!", int(self.monitor_sirka/3.5), int(self.monitor_vyska/2))
+            cv2.imshow("Error!", error_img)
+            cv2.waitKey(2500)
+            cv2.destroyWindow("Error!")
+        if typ_erroru == "nedostatok_penazi":
+            error_img = np.zeros((100, 600, 3), np.uint8)
+            cv2.putText(error_img, "Nedostatok penazi na kupu karty.", (10, 45), cv2.FONT_HERSHEY_COMPLEX, 0.8, (0, 0, 255), 2)
             cv2.moveWindow("Error!", int(self.monitor_sirka/3), int(self.monitor_vyska/2))
             cv2.imshow("Error!", error_img)
             cv2.waitKey(2500)
             cv2.destroyWindow("Error!")
 
-    def aktivuj_kartu(self, meno_karty, akcia):
-        if akcia == "predaj":
-            print("Predavam", meno_karty)
-            if self.aktivny_hrac == self.hraci_mena[0]:
-                self.hrac_1_peniaze = self.hrac_1_peniaze + 2
-            else:
-                self.hrac_2_peniaze = self.hrac_2_peniaze + 2
-            print("Hrac 1 ma peniaze:", self.hrac_1_peniaze)
-            print("Hrac 2 ma peniaze:", self.hrac_2_peniaze)
 
 
