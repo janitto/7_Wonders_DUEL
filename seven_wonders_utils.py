@@ -176,8 +176,10 @@ class SevenWondersPrvyVek:
         #   nakresli peniaze a body
         cv2.putText(img, "Pen:" +str(self.hrac_1_peniaze), (self.lavy_okraj[14] - 130, int(self.monitor_vyska / 2)-10), cv2.FONT_HERSHEY_DUPLEX, 1, (0, 255, 255), 1)
         cv2.putText(img, "Body:" +str(self.hrac_1_body), (self.lavy_okraj[14] - 260, int(self.monitor_vyska / 2)-10), cv2.FONT_HERSHEY_DUPLEX, 1, (255, 51, 51), 1)
+        #cv2.putText(img, "Sur:" +str(self.hrac_1_suroviny), (20, int(self.monitor_vyska / 2)-50), cv2.FONT_HERSHEY_DUPLEX, 0.8, (0, 76, 153), 1)
         cv2.putText(img, "Pen:" + str(self.hrac_2_peniaze), (self.monitor_sirka - 130, int(self.monitor_vyska / 2)-10), cv2.FONT_HERSHEY_DUPLEX, 1, (0, 255, 255), 1)
         cv2.putText(img, "Body:" + str(self.hrac_2_body), (self.monitor_sirka - 260, int(self.monitor_vyska / 2)-10), cv2.FONT_HERSHEY_DUPLEX, 1, (255, 51, 51), 1)
+        #cv2.putText(img, "Sur:" +str(self.hrac_2_suroviny), (self.lavy_okraj[19] + 80 + self.karta_sirka, int(self.monitor_vyska / 2)-50), cv2.FONT_HERSHEY_DUPLEX, 0.8, (0, 76, 153), 1)
 
         #   nakresli majetok hraca 1
 
@@ -344,8 +346,8 @@ class SevenWondersPrvyVek:
         zvolena_karta_img = cv2.imread(f"karty/cropped/{zvolena_karta}.jpg")
         zvolena_karta_img = cv2.resize(zvolena_karta_img, (self.karta_sirka * 2, self.karta_vyska * 2))
         zvolena_karta_pozadie[50:50+(self.karta_vyska*2), 20:20+(self.karta_sirka*2)] = zvolena_karta_img
-        cv2.putText(zvolena_karta_pozadie, "(o) Odhod:", (int(self.karta_sirka * 2.5), 90), cv2.FONT_HERSHEY_COMPLEX, 0.7, (0, 0, 255), 1)
-        cv2.putText(zvolena_karta_pozadie, "(k) Kup:", (int(self.karta_sirka * 2.5), 150), cv2.FONT_HERSHEY_COMPLEX, 0.7, (0, 0, 255), 1)
+        cv2.putText(zvolena_karta_pozadie, "(o) Odhod", (int(self.karta_sirka * 2.5), 90), cv2.FONT_HERSHEY_COMPLEX, 0.7, (0, 0, 255), 1)
+        cv2.putText(zvolena_karta_pozadie, "(k) Kup", (int(self.karta_sirka * 2.5), 150), cv2.FONT_HERSHEY_COMPLEX, 0.7, (0, 0, 255), 1)
         cv2.putText(zvolena_karta_pozadie, "(d) Postav div:", (int(self.karta_sirka * 2.5), 210), cv2.FONT_HERSHEY_COMPLEX, 0.7, (0, 0, 255), 1)
         cv2.putText(zvolena_karta_pozadie, "(c) Vyber inu kartu:", (int(self.karta_sirka * 2.5), 270), cv2.FONT_HERSHEY_COMPLEX, 0.7, (0, 0, 255), 1)
         cv2.moveWindow("Zvolena karta.", int(self.monitor_sirka / 3), int(self.monitor_vyska / 2))
@@ -381,22 +383,78 @@ class SevenWondersPrvyVek:
         if akcia == "kup":
             body_gain = eval("self." + meno_karty.lower() + ".body")
             peniaze_gain = eval("self." + meno_karty.lower() + ".peniaze")
-
+            farba_karty = eval("self."+meno_karty.lower()+".farba")
+            try: suroviny_gain = eval("self." + meno_karty.lower() + ".suroviny")
+            except: suroviny_gain = 0
             if self.aktivny_hrac == self.hraci_mena[0]:
-                if self.mozem_kupit(1, meno_karty):
-                    print(f"{self.aktivny_hrac} kupuje {meno_karty}.")
+                if self.mozem_kupit(meno_karty):
+                    # zaplatim
+                    cena = 0
+                    cena_karty = eval("self." + meno_karty.lower() + ".cena")
+                    if type(cena_karty) == int:
+                        cena = cena_karty
+                    else:
+                        for surovina in cena_karty:
+                            try:
+                                surovina = int(surovina)
+                            except:
+                                surovina = surovina
+                            if type(surovina) == int:
+                                cena = cena + surovina
+                            else:
+                                if surovina in self.hrac_1_suroviny:
+                                    cena = cena + 0
+                                else:
+                                    cena = self.hrac_2_suroviny.count(surovina) + 2
+
+                    self.hrac_1_peniaze -= cena
+                    # dostanem
                     self.hrac_1_body += body_gain
                     self.hrac_1_peniaze += peniaze_gain
-                    if eval("self."+meno_karty.lower()+".farba") == "hneda" or eval("self."+meno_karty.lower()+".farba") == "siva":
-                        self.hrac_1_suroviny += eval("self." + meno_karty.lower() + ".suroviny")
+                    if farba_karty == "hneda" or farba_karty == "siva":
+                        self.hrac_1_suroviny += suroviny_gain
                     self.hrac_1_karty.append(meno_karty)
+                    print(f"{self.aktivny_hrac} kupuje {meno_karty}. Dostal {body_gain} bodov, {peniaze_gain} penazi a suroviny: {suroviny_gain}")
+
                 else:
                     self.ukaz_error("nedostatok_penazi")
                     self.nakresli_vek()
             else:
-                self.hrac_2_body += body_gain
-                self.hrac_2_peniaze += peniaze_gain
-                self.hrac_2_karty.append(meno_karty)
+                if self.mozem_kupit(meno_karty):
+                    # zaplatim
+                    cena = 0
+                    cena_karty = eval("self." + meno_karty.lower() + ".cena")
+
+                    if type(cena_karty) == int:
+                        cena = cena_karty
+                    else:
+                        for surovina in cena_karty:
+                            try:
+                                surovina = int(surovina)
+                            except:
+                                surovina = surovina
+                            if type(surovina) == int:
+                                cena = cena + surovina
+                            else:
+                                if surovina in self.hrac_2_suroviny:
+                                    cena = cena + 0
+                                else:
+                                    cena = self.hrac_1_suroviny.count(surovina) + 2
+
+                    print("cena za kartu je:", cena)
+                    self.hrac_2_peniaze -= cena
+                    # dostanem
+                    self.hrac_2_body += body_gain
+                    self.hrac_2_peniaze += peniaze_gain
+                    if farba_karty == "hneda" or farba_karty == "siva":
+                        self.hrac_2_suroviny += suroviny_gain
+                    self.hrac_2_karty.append(meno_karty)
+                    print(
+                        f"{self.aktivny_hrac} kupuje {meno_karty}. Dostal {body_gain} bodov, {peniaze_gain} penazi a suroviny: {suroviny_gain}")
+
+                else:
+                    self.ukaz_error("nedostatok_penazi")
+                    self.nakresli_vek()
 
     def zrataj_karty(self, hrac, farba):
         count = 0
@@ -405,14 +463,65 @@ class SevenWondersPrvyVek:
                 count = count +1
         return count
 
-    def mozem_kupit(self, aktivny_hrac, meno_karty):
+    def mozem_kupit(self, meno_karty):
         cena = eval("self." + meno_karty.lower() + ".cena")
-        if cena == 0:
-            return True
-        else:
-            if aktivny_hrac == "1":
-                return True
+
+        if self.aktivny_hrac == self.hraci_mena[0]:
+
+            # ak je cena len penazna
+            if type(cena) == int:
+                if self.hrac_1_peniaze >= cena:
+                    return True
+                else:
+                    print(f"Hrac {self.aktivny_hrac} nema dost penazi na kupu {meno_karty}")
+                return False
+
+            # ak je cena kombinovana
             else:
+                for surovina in cena:
+                    try: surovina = int(surovina)
+                    except: surovina = surovina
+                    if type(surovina) == int:
+                        if self.hrac_1_peniaze >= surovina:
+                            pass
+                        else:
+                            return False
+                    else:
+                        if surovina in self.hrac_1_suroviny:
+                            pass
+                        else:
+                            if self.hrac_1_peniaze >= self.hrac_2_suroviny.count(surovina) + 2:
+                                pass
+                            else:
+                                return False
+                return True
+
+        else:
+            if type(cena) == int:
+                if self.hrac_2_peniaze >= cena:
+                    return True
+                else:
+                    print(f"Hrac {self.aktivny_hrac} nema dost penazi na kupu {meno_karty}")
+                return False
+            else:
+                for surovina in cena:
+                    try:
+                        surovina = int(surovina)
+                    except:
+                        surovina = surovina
+                    if type(surovina) == int:
+                        if self.hrac_2_peniaze >= surovina:
+                            pass
+                        else:
+                            return False
+                    else:
+                        if surovina in self.hrac_2_suroviny:
+                            pass
+                        else:
+                            if self.hrac_2_peniaze >= self.hrac_1_suroviny.count(surovina) + 2:
+                                pass
+                            else:
+                                return False
                 return True
 
     def ukaz_error(self, typ_erroru):

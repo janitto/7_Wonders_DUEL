@@ -113,6 +113,7 @@ class sklarna:
     body = 0
     peniaze = 0
     cena = 1
+    suroviny = "S"
 
 class staj:
     farba = "cervena"
