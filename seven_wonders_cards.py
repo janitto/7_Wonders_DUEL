@@ -74,12 +74,14 @@ class palisada:
     body = 0
     peniaze = 0
     cena = 2
+    boje = 1
 
 class pevnost:
     farba = "cervena"
     body = 0
     peniaze = 0
     cena = "H"
+    boje = 1
 
 class pisarska_dilna:
     farba = "zelena"
@@ -120,12 +122,14 @@ class staj:
     body = 0
     peniaze = 0
     cena = "D"
+    boje = 1
 
 class strazni_vez:
     farba = "cervena"
     body = 0
     peniaze = 0
     cena = 0
+    boje = 1
 
 class zasobarna_dreva:
     farba = "zlta"
