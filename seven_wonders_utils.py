@@ -8,7 +8,7 @@ import seven_wonders_cards
 class SevenWondersPrvyVek:
 
 
-    myList = os.listdir("karty/cropped")
+    myList = os.listdir("karty/vek_1")
     for karta in myList:
         if os.path.splitext(karta)[1].lower() in ('.jpg', '.jpeg'):
             x = karta.split(".")[0].lower()
@@ -19,6 +19,8 @@ class SevenWondersPrvyVek:
     monitor_vyska = 880
     karta_sirka = 80
     karta_vyska = 125
+    div_vyska = 150
+    div_sirka = int(div_vyska * 1.5)
     lavy_okraj = []         # sa zistuje v "zisti_rohy"
 
     hrac_1_horny_okraj_sivohnede = int(monitor_vyska / 2) + 15
@@ -27,6 +29,7 @@ class SevenWondersPrvyVek:
     hrac_1_horny_okraj_cervene = int(monitor_vyska / 2) + 15
     hrac_1_horny_okraj_zelene = int(monitor_vyska / 2) + 15
     hrac_1_lavy_okraj = [30, 120, 210, 300, 390]
+    hrac_1_lavy_okraj_div = [30, 360]
 
     hrac_2_horny_okraj_sivohnede = int(monitor_vyska / 2) + 15
     hrac_2_horny_okraj_zlte = int(monitor_vyska / 2) + 15
@@ -56,6 +59,12 @@ class SevenWondersPrvyVek:
     hrac_2_karty = []
     hrac_1_suroviny = []
     hrac_2_suroviny = []
+    hrac_1_divy = []
+    hrac_1_divy_meno = []
+    hrac_1_divy_aktivne = []
+    hrac_2_divy = []
+    hrac_2_divy_meno = []
+    hrac_2_divy_aktivne = []
 
 
     def __init__(self):
@@ -90,10 +99,10 @@ class SevenWondersPrvyVek:
         vsetky_karty_meno = []
         herne_karty = []
         herne_karty_meno = []
-        myList = os.listdir("karty/cropped")
+        myList = os.listdir("karty/vek_1")
         for karta in myList:
             if os.path.splitext(karta)[1].lower() in ('.jpg', '.jpeg'):
-                curImg = cv2.imread(f"karty/cropped/{karta}")
+                curImg = cv2.imread(f"karty/vek_1/{karta}")
                 curImg = cv2.resize(curImg, (self.karta_sirka, self.karta_vyska))
                 vsetky_karty.append(curImg)
                 vsetky_karty_meno.append(karta.split(".")[0])
@@ -107,6 +116,32 @@ class SevenWondersPrvyVek:
 
         self.herne_karty = herne_karty
         self.herne_karty_meno = herne_karty_meno
+
+        vsetky_divy = []
+        vsetky_divy_meno = []
+        myList = os.listdir("karty/divy")
+        for karta in myList:
+            if os.path.splitext(karta)[1].lower() in ('.jpg', '.jpeg'):
+                curImg = cv2.imread(f"karty/divy/{karta}")
+                curImg = cv2.resize(curImg, (self.div_sirka, self.div_vyska))
+                vsetky_divy.append(curImg)
+                vsetky_divy_meno.append(karta.split(".")[0])
+
+        for i in range(0, 4):
+            pick_id = random.randint(0, len(vsetky_divy) - 1)
+            self.hrac_1_divy.append(vsetky_divy[pick_id])
+            self.hrac_1_divy_meno.append(vsetky_divy_meno[pick_id])
+            self.hrac_1_divy_aktivne.append(False)
+            vsetky_divy.pop(pick_id)
+            vsetky_divy_meno.pop(pick_id)
+
+        for i in range(0, 4):
+            pick_id = random.randint(0, len(vsetky_divy) - 1)
+            self.hrac_2_divy.append(vsetky_divy[pick_id])
+            self.hrac_2_divy_meno.append(vsetky_divy_meno[pick_id])
+            self.hrac_2_divy_aktivne.append(False)
+            vsetky_divy.pop(pick_id)
+            vsetky_divy_meno.pop(pick_id)
 
     def nakresli_vek(self):
         self.tah = self.tah + 1
@@ -157,11 +192,45 @@ class SevenWondersPrvyVek:
                 else:
                     pass
 
-        #print(self.validne_karty())
-        #print(self.hrac_1_karty)
-        #print(self.hrac_2_karty)
-        #print(self.hrac_1_peniaze)
-        #print(self.hrac_2_peniaze)
+        #   nakresli divy sveta hrac 1
+        horny_okraj, lavy_okaj = self.horny_okraj, self.hrac_1_lavy_okraj[0]
+        for idx, div in enumerate(self.hrac_1_divy_meno):
+            div_img = cv2.imread(f"karty/divy/{div}.jpeg")
+            div_img = cv2.resize(div_img, (self.div_sirka, self.div_vyska))
+            if div in self.hrac_1_divy_aktivne:
+                img[horny_okraj:horny_okraj + self.div_vyska, lavy_okaj:lavy_okaj + self.div_sirka] = div_img
+            else:
+                div_img = cv2.cvtColor(div_img, cv2.COLOR_BGR2GRAY)
+                div_img = np.stack((div_img,)*3, axis=-1)
+                img[horny_okraj:horny_okraj + self.div_vyska, lavy_okaj:lavy_okaj + self.div_sirka] = div_img
+            if idx == 0:
+                lavy_okaj = lavy_okaj + self.div_sirka + 20
+            elif idx == 1:
+                horny_okraj = horny_okraj + self.div_vyska + 20
+                lavy_okaj = lavy_okaj - self.div_sirka - 20
+            elif idx == 2:
+                lavy_okaj = lavy_okaj + self.div_sirka + 20
+
+        #   nakresli divy sveta hrac 2
+        horny_okraj, lavy_okaj = self.horny_okraj, self.hrac_2_lavy_okraj[0]-20
+        for idx, div in enumerate(self.hrac_2_divy_meno):
+            div_img = cv2.imread(f"karty/divy/{div}.jpeg")
+            div_img = cv2.resize(div_img, (self.div_sirka, self.div_vyska))
+            if div in self.hrac_2_divy_aktivne:
+                img[horny_okraj:horny_okraj + self.div_vyska, lavy_okaj:lavy_okaj + self.div_sirka] = div_img
+            else:
+                div_img = cv2.cvtColor(div_img, cv2.COLOR_BGR2GRAY)
+                div_img = np.stack((div_img,) * 3, axis=-1)
+                img[horny_okraj:horny_okraj + self.div_vyska, lavy_okaj:lavy_okaj + self.div_sirka] = div_img
+            if idx == 0:
+                lavy_okaj = lavy_okaj + self.div_sirka + 20
+            elif idx == 1:
+                horny_okraj = horny_okraj + self.div_vyska + 20
+                lavy_okaj = lavy_okaj - self.div_sirka - 20
+            elif idx == 2:
+                lavy_okaj = lavy_okaj + self.div_sirka + 20
+
+
 
         #   nakresli zonu hraca 1 a 2 a zvyrazni aktivneho
 
@@ -193,7 +262,7 @@ class SevenWondersPrvyVek:
         zeleny_okraj = self.hrac_1_horny_okraj_zelene
 
         for karta in self.hrac_1_karty:
-            karta_img = cv2.imread(f"karty/cropped/{karta}.jpg")
+            karta_img = cv2.imread(f"karty/vek_1/{karta}.jpg")
             karta_img = cv2.resize(karta_img, (self.karta_sirka, self.karta_vyska))
             # img[hore:dole, lavo:pravo]
             if eval("self."+karta.lower()+".farba") == "hneda" or eval("self."+karta.lower()+".farba") == "siva":
@@ -214,6 +283,8 @@ class SevenWondersPrvyVek:
 
             #   nakresli majetok hraca 2
 
+        #   nakresli majetok hraca 2
+
         sivohnedy_okraj = self.hrac_2_horny_okraj_sivohnede
         zlty_okraj = self.hrac_2_horny_okraj_zlte
         modry_okraj = self.hrac_2_horny_okraj_modre
@@ -221,7 +292,7 @@ class SevenWondersPrvyVek:
         zeleny_okraj = self.hrac_2_horny_okraj_zelene
 
         for karta in self.hrac_2_karty:
-            karta_img = cv2.imread(f"karty/cropped/{karta}.jpg")
+            karta_img = cv2.imread(f"karty/vek_1/{karta}.jpg")
             karta_img = cv2.resize(karta_img, (self.karta_sirka, self.karta_vyska))
             # img[hore:dole, lavo:pravo]
             if eval("self." + karta.lower() + ".farba") == "hneda" or eval(
@@ -253,7 +324,7 @@ class SevenWondersPrvyVek:
         cv2.line(img, (l_okraj + 28, h_okraj - 10), (self.lavy_okraj[19] + self.karta_sirka, h_okraj - 10), (0, 102, 204), 1)
         cv2.putText(img, "Discard", (self.lavy_okraj[14], h_okraj - 8), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 102, 204), 1)
         for karta in self.odhodene_katy:
-            karta_img = cv2.imread(f"karty/cropped/{karta}.jpg")
+            karta_img = cv2.imread(f"karty/vek_1/{karta}.jpg")
             karta_img = cv2.resize(karta_img, (self.karta_sirka, self.karta_vyska))
             img[h_okraj:h_okraj+self.karta_vyska, l_okraj:l_okraj+self.karta_sirka] = karta_img
             l_okraj = l_okraj + 50
@@ -382,7 +453,7 @@ class SevenWondersPrvyVek:
     def zvol_mozosti(self, zvolena_karta):
         cv2.namedWindow("Zvolena karta.")
         zvolena_karta_pozadie = np.zeros((self.karta_vyska * 3, self.karta_sirka * 6, 3), np.uint8)
-        zvolena_karta_img = cv2.imread(f"karty/cropped/{zvolena_karta}.jpg")
+        zvolena_karta_img = cv2.imread(f"karty/vek_1/{zvolena_karta}.jpg")
         zvolena_karta_img = cv2.resize(zvolena_karta_img, (self.karta_sirka * 2, self.karta_vyska * 2))
         zvolena_karta_pozadie[50:50+(self.karta_vyska*2), 20:20+(self.karta_sirka*2)] = zvolena_karta_img
         cv2.putText(zvolena_karta_pozadie, "(o) Odhod", (int(self.karta_sirka * 2.5), 90), cv2.FONT_HERSHEY_COMPLEX, 0.7, (0, 0, 255), 1)
@@ -517,6 +588,46 @@ class SevenWondersPrvyVek:
                 else:
                     self.ukaz_error("nedostatok_penazi")
                     self.nakresli_vek()
+
+        if akcia == "postav_div":
+            suradnice_sirka = [50, 50+self.div_sirka + 20, 50, 50+self.div_sirka + 20]
+            suradnice_vyska = [50, 50, 50+self.div_vyska + 20, 50+self.div_vyska + 20]
+            cv2.namedWindow("Vyber div")
+            vyber_div_pozadie = np.zeros((self.div_vyska * 3, self.div_sirka * 3 - 50, 3), np.uint8)
+            if self.aktivny_hrac == self.hraci_mena[0]:
+                for idx, div in enumerate(self.hrac_1_divy_meno):
+                    div = cv2.imread(f"karty/divy/{div}.jpeg")
+                    div = cv2.resize(div, (self.div_sirka, self.div_vyska))
+                    vyber_div_pozadie[suradnice_vyska[idx]:suradnice_vyska[idx] + self.div_vyska, suradnice_sirka[idx]:suradnice_sirka[idx] + self.div_sirka] = div
+                cv2.imshow("Vyber div", vyber_div_pozadie)
+                key = cv2.waitKey()
+                if chr(key) in ("1", "2", "3", "4"):
+                    print(f"Staviam div", self.hrac_1_divy_meno[int(chr(key))-1])
+                    self.hrac_1_divy_aktivne.append(self.hrac_1_divy_meno[int(chr(key))-1])
+                    cv2.destroyWindow("Vyber div")
+                else:
+                    self.ukaz_error("nespravna_volba")
+                    cv2.destroyWindow("Vyber div")
+                    self.nakresli_vek()
+            else:
+                for idx, div in enumerate(self.hrac_2_divy_meno):
+                    div = cv2.imread(f"karty/divy/{div}.jpeg")
+                    div = cv2.resize(div, (self.div_sirka, self.div_vyska))
+                    vyber_div_pozadie[suradnice_vyska[idx]:suradnice_vyska[idx] + self.div_vyska,
+                    suradnice_sirka[idx]:suradnice_sirka[idx] + self.div_sirka] = div
+                cv2.imshow("Vyber div", vyber_div_pozadie)
+                key = cv2.waitKey()
+                if chr(key) in ("1", "2", "3", "4"):
+                    print(f"Staviam div", self.hrac_2_divy_meno[int(chr(key)) - 1])
+                    self.hrac_2_divy_aktivne.append(self.hrac_2_divy_meno[int(chr(key)) - 1])
+                    cv2.destroyWindow("Vyber div")
+                else:
+                    self.ukaz_error("nespravna_volba")
+                    cv2.destroyWindow("Vyber div")
+                    self.nakresli_vek()
+
+
+
 
     def zrataj_karty(self, hrac, farba):
         count = 0
@@ -656,4 +767,70 @@ class SevenWondersPrvyVek:
             cv2.destroyWindow("Error!")
 
 
+    def v2_mozem_kupit(self, hrac, meno_karty):
+        cena = eval("self." + meno_karty.lower() + ".cena")
 
+        if hrac == 1:
+            hrac = 1
+            oponent = 2
+        else:
+            hrac = 2
+            oponent = 1
+
+        suroviny_mam = eval("self.hrac_"+hrac+"_suroviny")
+        peniaze_mam = eval("self.hrac_"+hrac+"_peniaze")
+        # ak je cena len penazna
+        if type(cena) == int:
+            if peniaze_mam >= cena:
+                return True
+            else:
+                print(f"Hrac {self.aktivny_hrac} nema dost penazi na kupu {meno_karty}")
+            return False
+
+            # ak je cena kombinovana
+        else:
+            for surovina in cena:
+                try:
+                    surovina = int(surovina)
+                except:
+                    surovina = surovina
+                if type(surovina) == int:
+                    if peniaze_mam >= surovina:
+                        peniaze_mam -= surovina
+                        pass
+                    else:
+                        return False
+                else:
+                    if surovina in suroviny_mam:
+                        suroviny_mam.remove(surovina)
+                        pass
+                    elif surovina == "D" and "Zasobarna_dreva" in eval("self.hrac_"+hrac+"_karty"):
+                        if peniaze_mam >= 1:
+                            peniaze_mam -= 1
+                            pass
+                        else:
+                            return False
+                    elif surovina == "H" and "Zasobarna_hliny" in eval("self.hrac_"+hrac+"_karty"):
+                        if peniaze_mam >= 1:
+                            peniaze_mam -= 1
+                            pass
+                        else:
+                            return False
+                    elif surovina == "K" and "Zasobarna_kamene" in eval("self.hrac_"+hrac+"_karty"):
+                        if peniaze_mam >= 1:
+                            peniaze_mam -= 1
+                            pass
+                        else:
+                            return False
+                    elif (surovina == "P" or surovina == "S") and "Hostinec" in eval("self.hrac_"+hrac+"_karty"):
+                        if peniaze_mam >= 1:
+                            peniaze_mam -= 1
+                            pass
+                        else:
+                            return False
+                    else:
+                        if peniaze_mam >= eval("self.hrac_"+oponent+"_suroviny.count(surovina) + 2"):
+                            pass
+                        else:
+                            return False
+            return True

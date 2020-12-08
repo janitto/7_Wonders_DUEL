@@ -45,10 +45,10 @@ def vyber_herne_karty(karta_sirka, karta_vyska):
     vsetky_karty_meno = []
     herne_karty = []
     herne_karty_meno = []
-    myList = os.listdir("karty/cropped")
+    myList = os.listdir("karty/vek_1")
     for karta in myList:
         if os.path.splitext(karta)[1].lower() in ('.jpg', '.jpeg'):
-            curImg = cv2.imread(f"karty/cropped/{karta}")
+            curImg = cv2.imread(f"karty/vek_1/{karta}")
             curImg = cv2.resize(curImg, (karta_sirka, karta_vyska))
             vsetky_karty.append(curImg)
             vsetky_karty_meno.append(karta.split(".")[0])
