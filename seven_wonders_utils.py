@@ -438,18 +438,6 @@ class SevenWondersPrvyVek:
         else:
             return validne_karty
 
-    def vyber_a_aktivuj_kartu(self, karta):
-        if karta in self.validne_karty():
-            zvolena_karta = self.herne_karty_meno[self.herne_karty_alias.index(karta)]
-            moznost = self.zvol_mozosti(zvolena_karta)
-            self.vykonaj_akciu(zvolena_karta, moznost)
-            self.herne_karty_meno[self.herne_karty_alias.index(karta)] = None
-            self.herne_karty_alias[self.herne_karty_alias.index(karta)] = None
-            self.nakresli_vek()
-        else:
-            self.ukaz_error("nevalidna_karta")
-            self.nakresli_vek()
-
     def zvol_mozosti(self, zvolena_karta):
         cv2.namedWindow("Zvolena karta.")
         zvolena_karta_pozadie = np.zeros((self.karta_vyska * 3, self.karta_sirka * 6, 3), np.uint8)
@@ -482,152 +470,201 @@ class SevenWondersPrvyVek:
             self.ukaz_error("nespravna_volba")
             self.zvol_mozosti(zvolena_karta)
 
-    def vykonaj_akciu(self, meno_karty, akcia):
-        if akcia == "odhod":
-            if self.aktivny_hrac == self.hraci_mena[0]:
-                self.hrac_1_peniaze = self.hrac_1_peniaze + 2 + self.zrataj_karty(1, "zlta")
-                print(f"{self.aktivny_hrac} ohodil {meno_karty} za {2 + self.zrataj_karty(1, 'zlta')} panezi.")
+    def vyber_a_aktivuj_kartu(self, karta):
+        if karta in self.validne_karty():
+            zvolena_karta = self.herne_karty_meno[self.herne_karty_alias.index(karta)]
+            akcia = self.zvol_mozosti(zvolena_karta)
+            self.vykonaj_akciu(zvolena_karta, akcia)
+            self.herne_karty_meno[self.herne_karty_alias.index(karta)] = None
+            self.herne_karty_alias[self.herne_karty_alias.index(karta)] = None
+            self.nakresli_vek()
+        else:
+            self.ukaz_error("nevalidna_karta")
+            self.nakresli_vek()
 
-            else:
-                self.hrac_2_peniaze = self.hrac_2_peniaze + 2 + self.zrataj_karty(2, "zlta")
-                print(f"{self.aktivny_hrac} ohodil {meno_karty} za {2 + self.zrataj_karty(2, 'zlta')} panezi.")
+    def vykonaj_akciu(self, meno_karty, akcia):
+        if self.aktivny_hrac == self.hraci_mena[0]:
+            hrac = 1
+            oponent = 2
+        else:
+            hrac = 2
+            oponent = 1
+
+        if akcia == "odhod":
+            exec(f"self.hrac_{hrac}_peniaze = self.hrac_{hrac}_peniaze + 2 + self.zrataj_karty({hrac}, 'zlta')")
+            print(f"{self.aktivny_hrac} ohodil {meno_karty} za {2 + self.zrataj_karty(hrac, 'zlta')} panezi.")
             self.odhodene_katy.append(meno_karty)
 
         if akcia == "kup":
-            body_gain = eval("self." + meno_karty.lower() + ".body")
-            peniaze_gain = eval("self." + meno_karty.lower() + ".peniaze")
-            farba_karty = eval("self."+meno_karty.lower()+".farba")
-            try: suroviny_gain = eval("self." + meno_karty.lower() + ".suroviny")
-            except: suroviny_gain = 0
-            if self.aktivny_hrac == self.hraci_mena[0]:
-
-                if self.mozem_kupit(meno_karty):
-                    # zaplatim
-                    co_mam = self.hrac_1_suroviny
-                    cena = 0
-                    cena_karty = eval("self." + meno_karty.lower() + ".cena")
-                    if type(cena_karty) == int:
-                        cena = cena_karty
-                    else:
-                        for surovina in cena_karty:
-                            try:
-                                surovina = int(surovina)
-                            except:
-                                surovina = surovina
-                            if type(surovina) == int:
-                                cena = cena + surovina
-                            else:
-                                if surovina in co_mam:
-                                    cena = cena + 0
-                                    co_mam.remove(surovina)
-                                elif surovina == "D" and "Zasobarna_dreva" in self.hrac_1_karty:
-                                    cena = cena + 1
-                                elif surovina == "H" and "Zasobarna_hliny" in self.hrac_1_karty:
-                                    cena = cena + 1
-                                elif surovina == "K" and "Zasobarna_kamene" in self.hrac_1_karty:
-                                    cena = cena + 1
-                                else:
-                                    cena = cena + self.hrac_2_suroviny.count(surovina) + 2
-
-                    self.hrac_1_peniaze -= cena
-                    # dostanem
-                    self.hrac_1_body += body_gain
-                    self.hrac_1_peniaze += peniaze_gain
-                    if farba_karty == "hneda" or farba_karty == "siva":
-                        self.hrac_1_suroviny += suroviny_gain
-                    elif farba_karty == "cervena":
-                        self.boje_stav = self.boje_stav + eval("self." + meno_karty.lower() + ".boje")
-                    self.hrac_1_karty.append(meno_karty)
-                    print(f"{self.aktivny_hrac} kupuje {meno_karty}. Dostal {body_gain} bodov, {peniaze_gain} penazi a suroviny: {suroviny_gain}")
-
-                else:
-                    self.ukaz_error("nedostatok_penazi")
-                    self.nakresli_vek()
-            else:
-                if self.mozem_kupit(meno_karty):
-                    co_mam = self.hrac_2_suroviny
-                    # zaplatim
-                    cena = 0
-                    cena_karty = eval("self." + meno_karty.lower() + ".cena")
-
-                    if type(cena_karty) == int:
-                        cena = cena_karty
-                    else:
-                        for surovina in cena_karty:
-                            try:
-                                surovina = int(surovina)
-                            except:
-                                surovina = surovina
-                            if type(surovina) == int:
-                                cena = cena + surovina
-                            else:
-                                if surovina in co_mam:
-                                    cena = cena + 0
-                                    co_mam.remove(surovina)
-                                elif surovina == "D" and "Zasobarna_dreva" in self.hrac_2_karty:
-                                    cena = cena + 1
-                                elif surovina == "H" and "Zasobarna_hliny" in self.hrac_2_karty:
-                                    cena = cena + 1
-                                elif surovina == "K" and "Zasobarna_kamene" in self.hrac_2_karty:
-                                    cena = cena + 1
-                                else:
-                                    cena = cena + self.hrac_1_suroviny.count(surovina) + 2
-
-                    self.hrac_2_peniaze -= cena
-                    # dostanem
-                    self.hrac_2_body += body_gain
-                    self.hrac_2_peniaze += peniaze_gain
-                    if farba_karty == "hneda" or farba_karty == "siva":
-                        self.hrac_2_suroviny += suroviny_gain
-                    elif farba_karty == "cervena":
-                        self.boje_stav = self.boje_stav - eval("self." + meno_karty.lower() + ".boje")
-                    self.hrac_2_karty.append(meno_karty)
-                    print(
-                        f"{self.aktivny_hrac} kupuje {meno_karty}. Dostal {body_gain} bodov, {peniaze_gain} penazi a suroviny: {suroviny_gain}")
-
-                else:
-                    self.ukaz_error("nedostatok_penazi")
-                    self.nakresli_vek()
+            if self.mozem_kupit(hrac, meno_karty):
+                self.kup_kartu(hrac, meno_karty)
 
         if akcia == "postav_div":
             suradnice_sirka = [50, 50+self.div_sirka + 20, 50, 50+self.div_sirka + 20]
             suradnice_vyska = [50, 50, 50+self.div_vyska + 20, 50+self.div_vyska + 20]
             cv2.namedWindow("Vyber div")
             vyber_div_pozadie = np.zeros((self.div_vyska * 3, self.div_sirka * 3 - 50, 3), np.uint8)
-            if self.aktivny_hrac == self.hraci_mena[0]:
-                for idx, div in enumerate(self.hrac_1_divy_meno):
-                    div = cv2.imread(f"karty/divy/{div}.jpeg")
-                    div = cv2.resize(div, (self.div_sirka, self.div_vyska))
-                    vyber_div_pozadie[suradnice_vyska[idx]:suradnice_vyska[idx] + self.div_vyska, suradnice_sirka[idx]:suradnice_sirka[idx] + self.div_sirka] = div
-                cv2.imshow("Vyber div", vyber_div_pozadie)
-                key = cv2.waitKey()
-                if chr(key) in ("1", "2", "3", "4"):
-                    print(f"Staviam div", self.hrac_1_divy_meno[int(chr(key))-1])
-                    self.hrac_1_divy_aktivne.append(self.hrac_1_divy_meno[int(chr(key))-1])
-                    cv2.destroyWindow("Vyber div")
-                else:
-                    self.ukaz_error("nespravna_volba")
-                    cv2.destroyWindow("Vyber div")
-                    self.nakresli_vek()
+            for idx, div in enumerate(eval(f"self.hrac_{hrac}_divy_meno")):
+                div = cv2.imread(f"karty/divy/{div}.jpeg")
+                div = cv2.resize(div, (self.div_sirka, self.div_vyska))
+                vyber_div_pozadie[suradnice_vyska[idx]:suradnice_vyska[idx] + self.div_vyska, suradnice_sirka[idx]:suradnice_sirka[idx] + self.div_sirka] = div
+            cv2.imshow("Vyber div", vyber_div_pozadie)
+            key = cv2.waitKey()
+            if chr(key) in ("1", "2", "3", "4"):
+                div = eval(f"self.hrac_{hrac}_divy_meno[int(chr({key}))-1]")
+                self.postav_div(hrac, div)
+                eval(f"self.hrac_{hrac}_divy_aktivne.append('{div}')")
+                cv2.destroyWindow("Vyber div")
             else:
-                for idx, div in enumerate(self.hrac_2_divy_meno):
-                    div = cv2.imread(f"karty/divy/{div}.jpeg")
-                    div = cv2.resize(div, (self.div_sirka, self.div_vyska))
-                    vyber_div_pozadie[suradnice_vyska[idx]:suradnice_vyska[idx] + self.div_vyska,
-                    suradnice_sirka[idx]:suradnice_sirka[idx] + self.div_sirka] = div
-                cv2.imshow("Vyber div", vyber_div_pozadie)
-                key = cv2.waitKey()
-                if chr(key) in ("1", "2", "3", "4"):
-                    print(f"Staviam div", self.hrac_2_divy_meno[int(chr(key)) - 1])
-                    self.hrac_2_divy_aktivne.append(self.hrac_2_divy_meno[int(chr(key)) - 1])
-                    cv2.destroyWindow("Vyber div")
+                self.ukaz_error("nespravna_volba")
+                cv2.destroyWindow("Vyber div")
+                self.nakresli_vek()
+
+    def mozem_kupit(self, hrac, meno_karty):
+        cena = eval("self." + meno_karty.lower() + ".cena")
+
+        if hrac == 1:
+            hrac = 1
+            oponent = 2
+        else:
+            hrac = 2
+            oponent = 1
+
+        suroviny_mam = eval(f"self.hrac_{hrac}_suroviny").copy()
+        peniaze_mam = eval(f"self.hrac_{hrac}_peniaze")
+        # ak je cena len penazna
+        if type(cena) == int:
+            if peniaze_mam >= cena:
+                return True
+            else:
+                print(f"Hrac {self.aktivny_hrac} nema dost penazi na kupu {meno_karty}")
+            return False
+
+            # ak je cena kombinovana
+        else:
+            for surovina in cena:
+                try:
+                    surovina = int(surovina)
+                except:
+                    surovina = surovina
+                if type(surovina) == int:
+                    if peniaze_mam >= surovina:
+                        peniaze_mam -= surovina
+                        pass
+                    else:
+                        return False
                 else:
-                    self.ukaz_error("nespravna_volba")
-                    cv2.destroyWindow("Vyber div")
-                    self.nakresli_vek()
+                    if surovina in suroviny_mam:
+                        suroviny_mam = suroviny_mam.remove(surovina)
+                        pass
+                    elif surovina == "D" and "Zasobarna_dreva" in eval("self.hrac_"+str(hrac)+"_karty"):
+                        if peniaze_mam >= 1:
+                            peniaze_mam -= 1
+                            pass
+                        else:
+                            return False
+                    elif surovina == "H" and "Zasobarna_hliny" in eval("self.hrac_"+str(hrac)+"_karty"):
+                        if peniaze_mam >= 1:
+                            peniaze_mam -= 1
+                            pass
+                        else:
+                            return False
+                    elif surovina == "K" and "Zasobarna_kamene" in eval("self.hrac_"+str(hrac)+"_karty"):
+                        if peniaze_mam >= 1:
+                            peniaze_mam -= 1
+                            pass
+                        else:
+                            return False
+                    elif (surovina == "P" or surovina == "S") and "Hostinec" in eval("self.hrac_"+str(hrac)+"_karty"):
+                        if peniaze_mam >= 1:
+                            peniaze_mam -= 1
+                            pass
+                        else:
+                            return False
+                    else:
+                        if peniaze_mam >= eval("self.hrac_"+str(oponent)+"_suroviny.count(surovina) + 2"):
+                            pass
+                        else:
+                            return False
+            return True
 
+    def kup_kartu(self, hrac, meno_karty):
+        try:
+            body_gain = eval("self." + meno_karty.lower() + ".body")
+        except:
+            body_gain = 0
+        try:
+            peniaze_gain = eval("self." + meno_karty.lower() + ".peniaze")
+        except:
+            peniaze_gain = 0
+        try:
+            suroviny_gain = eval("self." + meno_karty.lower() + ".suroviny")
+        except:
+            suroviny_gain = []
+        try:
+            boje_gain = eval("self." + meno_karty.lower() + ".boje")
+        except:
+            boje_gain = 0
+        karta_farba = eval("self." + meno_karty.lower() + ".farba")
 
+        if hrac == 1:
+            hrac = 1
+            oponent = 2
+        else:
+            hrac = 2
+            oponent = 1
 
+        co_mam = eval(f"self.hrac_{hrac}_suroviny").copy()
+        cena_karty = eval("self." + meno_karty.lower() + ".cena")
+        cena = 0
+        if type(cena_karty) == int:
+            cena = cena_karty
+        else:
+            for surovina in cena_karty:
+                try:
+                    surovina = int(surovina)
+                except:
+                    surovina = surovina
+                if type(surovina) == int:
+                    cena = cena + surovina
+                else:
+                    if surovina in co_mam:
+                        cena = cena + 0
+                        co_mam.remove(surovina)
+                        print("Pouzil som", surovina, "mam uz len", co_mam)
+                    elif surovina == "D" and "Zasobarna_dreva" in eval(f"self.hrac_{hrac}_karty"):
+                        cena = cena + 1
+                    elif surovina == "H" and "Zasobarna_hliny" in eval(f"self.hrac_{hrac}_karty"):
+                        cena = cena + 1
+                    elif surovina == "K" and "Zasobarna_kamene" in eval(f"self.hrac_{hrac}_karty"):
+                        cena = cena + 1
+                    elif (surovina == "P" or surovina == "S") and "Hostinec" in eval(f"self.hrac_{hrac}_karty"):
+                        cena = cena + 1
+                    else:
+                        prirazka = eval(f"self.hrac_{oponent}_suroviny.count('{surovina}') + 2")
+                        cena = cena + prirazka
+
+        exec(f"self.hrac_{hrac}_peniaze -= {cena}")
+        # dostanem
+        #   body
+        exec(f"self.hrac_{hrac}_body += {body_gain}")
+        #   peniaze
+        exec(f"self.hrac_{hrac}_peniaze += {peniaze_gain}")
+        #   suroviny ak je karta siva alebo hneda
+        if karta_farba == "hneda" or karta_farba == "siva":
+            for sur in suroviny_gain:
+                exec(f"self.hrac_{hrac}_suroviny.append('{sur}')")
+        #   boje
+        if hrac == 1:   self.boje_stav = self.boje_stav + boje_gain
+        if hrac == 2:   self.boje_stav = self.boje_stav - boje_gain
+        #   samotnu kartu
+        eval(f"self.hrac_{hrac}_karty.append(meno_karty)")
+
+        print(
+            f"{self.aktivny_hrac} kupuje {meno_karty}. Dostal {body_gain} bodov, {peniaze_gain} penazi, suroviny: {suroviny_gain} a boje: {boje_gain}")
+
+    def postav_div(self, hrac, meno_divu):
+        print(f"Hrac {self.aktivny_hrac} postavil div: {meno_divu}")
 
     def zrataj_karty(self, hrac, farba):
         count = 0
@@ -635,110 +672,6 @@ class SevenWondersPrvyVek:
             if eval("self."+meno_karty.lower()+".farba") == farba:
                 count = count +1
         return count
-
-    def mozem_kupit(self, meno_karty):
-        cena = eval("self." + meno_karty.lower() + ".cena")
-
-        if self.aktivny_hrac == self.hraci_mena[0]:
-            suroviny_mam = self.hrac_1_suroviny
-            peniaze_mam = self.hrac_1_peniaze
-            # ak je cena len penazna
-            if type(cena) == int:
-                if peniaze_mam >= cena:
-                    return True
-                else:
-                    print(f"Hrac {self.aktivny_hrac} nema dost penazi na kupu {meno_karty}")
-                return False
-
-            # ak je cena kombinovana
-            else:
-                for surovina in cena:
-                    try: surovina = int(surovina)
-                    except: surovina = surovina
-                    if type(surovina) == int:
-                        if peniaze_mam >= surovina:
-                            peniaze_mam -= surovina
-                            pass
-                        else:
-                            return False
-                    else:
-                        if surovina in suroviny_mam:
-                            suroviny_mam.remove(surovina)
-                            pass
-                        elif surovina == "D" and "Zasobarna_dreva" in self.hrac_1_karty:
-                            if peniaze_mam >= 1:
-                                peniaze_mam -= 1
-                                pass
-                            else:
-                                return False
-                        elif surovina == "H" and "Zasobarna_hliny" in self.hrac_1_karty:
-                            if peniaze_mam >= 1:
-                                peniaze_mam -= 1
-                                pass
-                            else:
-                                return False
-                        elif surovina == "K" and "Zasobarna_kamene" in self.hrac_1_karty:
-                            if peniaze_mam >= 1:
-                                peniaze_mam -= 1
-                                pass
-                            else:
-                                return False
-                        else:
-                            if peniaze_mam >= self.hrac_2_suroviny.count(surovina) + 2:
-                                pass
-                            else:
-                                return False
-                return True
-
-        else:
-            suroviny_mam = self.hrac_2_suroviny
-            peniaze_mam = self.hrac_2_peniaze
-            if type(cena) == int:
-                if self.hrac_2_peniaze >= cena:
-                    return True
-                else:
-                    print(f"Hrac {self.aktivny_hrac} nema dost penazi na kupu {meno_karty}")
-                return False
-            else:
-                for surovina in cena:
-                    try:
-                        surovina = int(surovina)
-                    except:
-                        surovina = surovina
-                    if type(surovina) == int:
-                        if peniaze_mam >= surovina:
-                            peniaze_mam -= surovina
-                            pass
-                        else:
-                            return False
-                    else:
-                        if surovina in suroviny_mam:
-                            suroviny_mam.remove(surovina)
-                            pass
-                        elif surovina == "D" and "Zasobarna_dreva" in self.hrac_2_karty:
-                            if peniaze_mam >= 1:
-                                peniaze_mam -= 1
-                                pass
-                            else:
-                                return False
-                        elif surovina == "H" and "Zasobarna_hliny" in self.hrac_2_karty:
-                            if peniaze_mam >= 1:
-                                peniaze_mam -= 1
-                                pass
-                            else:
-                                return False
-                        elif surovina == "K" and "Zasobarna_kamene" in self.hrac_2_karty:
-                            if peniaze_mam >= 1:
-                                peniaze_mam -= 1
-                                pass
-                            else:
-                                return False
-                        else:
-                            if peniaze_mam >= self.hrac_1_suroviny.count(surovina) + 2:
-                                pass
-                            else:
-                                return False
-                return True
 
     def ukaz_error(self, typ_erroru):
         next(self.hraci)
@@ -766,71 +699,3 @@ class SevenWondersPrvyVek:
             cv2.waitKey(2500)
             cv2.destroyWindow("Error!")
 
-
-    def v2_mozem_kupit(self, hrac, meno_karty):
-        cena = eval("self." + meno_karty.lower() + ".cena")
-
-        if hrac == 1:
-            hrac = 1
-            oponent = 2
-        else:
-            hrac = 2
-            oponent = 1
-
-        suroviny_mam = eval("self.hrac_"+hrac+"_suroviny")
-        peniaze_mam = eval("self.hrac_"+hrac+"_peniaze")
-        # ak je cena len penazna
-        if type(cena) == int:
-            if peniaze_mam >= cena:
-                return True
-            else:
-                print(f"Hrac {self.aktivny_hrac} nema dost penazi na kupu {meno_karty}")
-            return False
-
-            # ak je cena kombinovana
-        else:
-            for surovina in cena:
-                try:
-                    surovina = int(surovina)
-                except:
-                    surovina = surovina
-                if type(surovina) == int:
-                    if peniaze_mam >= surovina:
-                        peniaze_mam -= surovina
-                        pass
-                    else:
-                        return False
-                else:
-                    if surovina in suroviny_mam:
-                        suroviny_mam.remove(surovina)
-                        pass
-                    elif surovina == "D" and "Zasobarna_dreva" in eval("self.hrac_"+hrac+"_karty"):
-                        if peniaze_mam >= 1:
-                            peniaze_mam -= 1
-                            pass
-                        else:
-                            return False
-                    elif surovina == "H" and "Zasobarna_hliny" in eval("self.hrac_"+hrac+"_karty"):
-                        if peniaze_mam >= 1:
-                            peniaze_mam -= 1
-                            pass
-                        else:
-                            return False
-                    elif surovina == "K" and "Zasobarna_kamene" in eval("self.hrac_"+hrac+"_karty"):
-                        if peniaze_mam >= 1:
-                            peniaze_mam -= 1
-                            pass
-                        else:
-                            return False
-                    elif (surovina == "P" or surovina == "S") and "Hostinec" in eval("self.hrac_"+hrac+"_karty"):
-                        if peniaze_mam >= 1:
-                            peniaze_mam -= 1
-                            pass
-                        else:
-                            return False
-                    else:
-                        if peniaze_mam >= eval("self.hrac_"+oponent+"_suroviny.count(surovina) + 2"):
-                            pass
-                        else:
-                            return False
-            return True
