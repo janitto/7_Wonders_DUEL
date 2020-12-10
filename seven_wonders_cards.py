@@ -1,3 +1,5 @@
+####### vek 1 #######
+
 class dilna:
     farba = "zelena"
     body = 1
