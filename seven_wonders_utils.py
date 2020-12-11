@@ -1,15 +1,17 @@
 import cv2
 import os
+import time
 import random
 import numpy as np
-from itertools import cycle
+from itertools import cycle, islice
 import logging
-import seven_wonders_cards
+import json
+import shutil
 import seven_wonders_divy
 import seven_wonders_tokeny
+import seven_wonders_cards
 
 class SevenWondersPrvyVek:
-
 
     myList = os.listdir("karty/vek_1")
     for karta in myList:
@@ -54,11 +56,11 @@ class SevenWondersPrvyVek:
     hrac_2_lavy_okraj = [1320, 1410, 1500, 1590, monitor_sirka - 30 - karta_sirka - 10]
 
     horny_okraj = 50        # o kolko zhora posunieme herny plan
-    herne_karty = []        # sa zistuje v "vyber_herne_karty"
+    #herne_karty = []        # sa zistuje v "vyber_herne_karty"
     herne_karty_meno = []   # sa zistuje v "vyber_herne_karty"
     herne_karty_alias = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t"]
 
-    odhodene_katy = []
+    odhodene_karty = []
     boje_stav = 9
     boje_zrus_peniaze = [None, 5, 5, 5, 2, 2, 2, None, None, None, None, None, 2, 2, 2, 5, 5, 5, None]
     herne_tokeny_meno = []
@@ -66,7 +68,7 @@ class SevenWondersPrvyVek:
 
     tah = 0
     hraci_mena = ["Jany", "Mima"]
-    hraci = cycle(hraci_mena)
+    hraci = []
     aktivny_hrac = []
 
     hrac_1_peniaze = 7
@@ -77,10 +79,10 @@ class SevenWondersPrvyVek:
     hrac_2_karty = []
     hrac_1_suroviny = []
     hrac_2_suroviny = []
-    hrac_1_divy = []
+    # hrac_1_divy = []
     hrac_1_divy_meno = []
     hrac_1_divy_aktivne = []
-    hrac_2_divy = []
+    # hrac_2_divy = []
     hrac_2_divy_meno = []
     hrac_2_divy_aktivne = []
     hrac_1_tokeny = []
@@ -89,6 +91,7 @@ class SevenWondersPrvyVek:
 
     def __init__(self):
 
+        self.hra_id = self.generate_game_id()
         self.zisti_rohy()
         self.vyber_herne_karty()
         cv2.namedWindow("7wonders")
@@ -118,7 +121,7 @@ class SevenWondersPrvyVek:
         #   herne karty
         vsetky_karty = []
         vsetky_karty_meno = []
-        herne_karty = []
+        #herne_karty = []
         herne_karty_meno = []
         myList = os.listdir("karty/vek_1")
         for karta in myList:
@@ -132,12 +135,12 @@ class SevenWondersPrvyVek:
 
         for i in range(0, 20):
             pick_id = random.randint(0, len(vsetky_karty) - 1)
-            herne_karty.append(vsetky_karty[pick_id])
+            #herne_karty.append(vsetky_karty[pick_id])
             herne_karty_meno.append(vsetky_karty_meno[pick_id])
             vsetky_karty.pop(pick_id)
             vsetky_karty_meno.pop(pick_id)
 
-        self.herne_karty = herne_karty
+        #self.herne_karty = herne_karty
         self.herne_karty_meno = herne_karty_meno
 
         #   herne divy pre hraca 1 a 2
@@ -155,7 +158,7 @@ class SevenWondersPrvyVek:
 
         for i in range(0, 4):
             pick_id = random.randint(0, len(vsetky_divy) - 1)
-            self.hrac_1_divy.append(vsetky_divy[pick_id])
+            # self.hrac_1_divy.append(vsetky_divy[pick_id])
             self.hrac_1_divy_meno.append(vsetky_divy_meno[pick_id])
             self.hrac_1_divy_aktivne.append(False)
             vsetky_divy.pop(pick_id)
@@ -163,7 +166,7 @@ class SevenWondersPrvyVek:
 
         for i in range(0, 4):
             pick_id = random.randint(0, len(vsetky_divy) - 1)
-            self.hrac_2_divy.append(vsetky_divy[pick_id])
+            # self.hrac_2_divy.append(vsetky_divy[pick_id])
             self.hrac_2_divy_meno.append(vsetky_divy_meno[pick_id])
             self.hrac_2_divy_aktivne.append(False)
             vsetky_divy.pop(pick_id)
@@ -194,19 +197,25 @@ class SevenWondersPrvyVek:
         logging.debug(f"Herne tokeny: {self.herne_tokeny_meno}")
 
     def nakresli_vek(self):
+        self.read_from_meta("input_metadata.json")
+
         self.tah = self.tah + 1
+
         self.aktivny_hrac = next(self.hraci)
+
         logging.debug(f"Aktivny hrac: {self.aktivny_hrac}")
+        logging.debug(f"Tah cislo: {self.tah}")
+
 
         img = np.zeros((self.monitor_vyska, self.monitor_sirka, 3), np.uint8)
 
         #   nakresli titulok
 
-        cv2.putText(img, f"Toto je 7 Wonders DUEL - tah: {self.tah}", (self.lavy_okraj[9], 35), cv2.FONT_HERSHEY_DUPLEX, 1.2, (0, 255, 0), 3)
+        cv2.putText(img, f"7 Wonders DUEL - id hry: {self.hra_id}- tah: {self.tah}", (self.lavy_okraj[14], 35), cv2.FONT_HERSHEY_DUPLEX, 1, (0, 255, 0), 2)
 
         #   nakresli karty
         horny_okraj = self.horny_okraj
-        for i in range(0, len(self.herne_karty)):
+        for i in range(0, len(self.herne_karty_meno)):
 
             #   nastav hodnotu horneho okraja, aby sa karty poukladali do riadkov
 
@@ -220,7 +229,9 @@ class SevenWondersPrvyVek:
                 #print(f"Karta {self.herne_karty_alias[i]} je {self.herne_karty_meno[i]}")
 
                 if self.herne_karty_meno[i] is not None:
-                    img[horny_okraj:horny_okraj + self.karta_vyska, self.lavy_okraj[i]:self.lavy_okraj[i] + self.karta_sirka] = self.herne_karty[i]
+                    karta_img = cv2.imread(f"karty/vek_1/{self.herne_karty_meno[i]}.jpg")
+                    karta_img = cv2.resize(karta_img, (self.karta_sirka, self.karta_vyska))
+                    img[horny_okraj:horny_okraj + self.karta_vyska, self.lavy_okraj[i]:self.lavy_okraj[i] + self.karta_sirka] = karta_img
                     cv2.putText(img, self.herne_karty_alias[i], (self.lavy_okraj[i], horny_okraj+10), cv2.FONT_HERSHEY_DUPLEX, 0.8, (0, 255, 255), 2)
                 else:
                     pass
@@ -231,7 +242,9 @@ class SevenWondersPrvyVek:
 
                 if self.herne_karty_meno[i] is not None:
                     if self.herne_karty_alias[i] in self.validne_karty():
-                        img[horny_okraj:horny_okraj + self.karta_vyska, self.lavy_okraj[i]:self.lavy_okraj[i] + self.karta_sirka] = self.herne_karty[i]
+                        karta_img = cv2.imread(f"karty/vek_1/{self.herne_karty_meno[i]}.jpg")
+                        karta_img = cv2.resize(karta_img, (self.karta_sirka, self.karta_vyska))
+                        img[horny_okraj:horny_okraj + self.karta_vyska, self.lavy_okraj[i]:self.lavy_okraj[i] + self.karta_sirka] = karta_img
                         cv2.putText(img, self.herne_karty_alias[i], (self.lavy_okraj[i], horny_okraj + 10), cv2.FONT_HERSHEY_DUPLEX, 0.8, (0, 255, 255), 2)
                     else:
                         karta = cv2.imread("karty/ine/zadna_strana_vek_1_regular.jpeg")
@@ -380,7 +393,7 @@ class SevenWondersPrvyVek:
         l_okraj = int((self.lavy_okraj[15] + self.lavy_okraj[14]) / 2 - 10)
         cv2.line(img, (l_okraj + 28, h_okraj - 10), (self.lavy_okraj[19] + self.karta_sirka, h_okraj - 10), (0, 102, 204), 1)
         cv2.putText(img, "Discard", (self.lavy_okraj[14], h_okraj - 8), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 102, 204), 1)
-        for karta in self.odhodene_katy:
+        for karta in self.odhodene_karty:
             karta_img = cv2.imread(f"karty/vek_1/{karta}.jpg")
             karta_img = cv2.resize(karta_img, (self.karta_sirka, self.karta_vyska))
             img[h_okraj:h_okraj+self.karta_vyska, l_okraj:l_okraj+self.karta_sirka] = karta_img
@@ -510,10 +523,12 @@ class SevenWondersPrvyVek:
             self.vykonaj_akciu(zvolena_karta, akcia)
             self.herne_karty_meno[self.herne_karty_alias.index(karta)] = None
             self.herne_karty_alias[self.herne_karty_alias.index(karta)] = None
+            self.metadata_to_json("input_metadata.json")
             self.nakresli_vek()
         else:
             logging.error(f"Karta {self.herne_karty_meno[self.herne_karty_alias.index(karta)]} nie je plne odkryta, preto ju nie je mozne zahrat. Znova.")
             self.ukaz_error("nevalidna_karta")
+            self.metadata_to_json("input_metadata.json")
             self.nakresli_vek()
 
     def zvol_mozosti(self, zvolena_karta):
@@ -565,7 +580,7 @@ class SevenWondersPrvyVek:
             exec(f"self.hrac_{hrac}_peniaze = self.hrac_{hrac}_peniaze + 2 + self.zrataj_karty({hrac}, 'zlta')")
             novy_stav = eval(f"self.hrac_{hrac}_peniaze")
             logging.info(f"{self.aktivny_hrac} ohodil {meno_karty} za {2 + self.zrataj_karty(hrac, 'zlta')} panezi. Novy stav penazi {novy_stav}")
-            self.odhodene_katy.append(meno_karty)
+            self.odhodene_karty.append(meno_karty)
 
         if akcia == "kup":
             if self.mozem_kupit(hrac, meno_karty):
@@ -770,7 +785,7 @@ class SevenWondersPrvyVek:
             logging.debug(f"Karta nie je zlacnena Divmi alebo Tokenmi. Jej cena je: {cena}")
         else:
             cena = zlacnene
-            print.debug(f"Karta je zlacnena na {zlacnene}")
+            logging.debug(f"Karta je zlacnena na {zlacnene}")
         exec(f"self.hrac_{hrac}_peniaze -= {cena}")
         # dostanem
         #   body
@@ -828,11 +843,11 @@ class SevenWondersPrvyVek:
                 logging.info(f"Oponentovi odoberam 3 peniaze.")
                 exec(f"self.hrac_{oponent}_peniaze -= 3")
             if efekt == "vezmi_kartu_z_discartu":
-                if len(self.odhodene_katy) != 0:
-                    pick_id = random.randint(0, len(self.odhodene_katy) - 1)
-                    logging.info(f"Z diskartu sa berie: {self.odhodene_katy[pick_id]}")
-                    self.kup_kartu(hrac, self.odhodene_katy[pick_id], zlacnene=0)
-                    self.odhodene_katy.pop(pick_id)
+                if len(self.odhodene_karty) != 0:
+                    pick_id = random.randint(0, len(self.odhodene_karty) - 1)
+                    logging.info(f"Z diskartu sa berie: {self.odhodene_karty[pick_id]}")
+                    self.kup_kartu(hrac, self.odhodene_karty[pick_id], zlacnene=0)
+                    self.odhodene_karty.pop(pick_id)
                 else:
                     logging.info("Diskart je prazdny. Efekt prepadol.")
             if efekt == "odhod_oponentovi_hnedu":
@@ -892,3 +907,85 @@ class SevenWondersPrvyVek:
             cv2.waitKey(2500)
             cv2.destroyWindow("Error!")
 
+    def metadata_to_json(self, metadatafile):
+        vars_to_json = {#"herne_karty": self.herne_karty,
+                        "rozohrana_hra": "Ano",
+                        "cas_hry": time.strftime("%d/%m/%Y, %H:%M:%S", time.localtime()),
+                        "hra_id": self.hra_id,
+                        "herne_karty_meno": self.herne_karty_meno,
+                        "herne_karty_alias": self.herne_karty_alias,
+                        "odhodene_karty": self.odhodene_karty,
+                        "boje_stav": self.boje_stav,
+                        "boje_zrus_peniaze": self.boje_zrus_peniaze,
+                        "herne_tokeny_meno": self.herne_tokeny_meno,
+                        "neherne_tokeny_meno": self.neherne_tokeny_meno,
+                        "tah": self.tah,
+                        "hraci_mena": self.hraci_mena,
+                        "aktivny_hrac": self.aktivny_hrac,
+                        "hrac_1_peniaze": self.hrac_1_peniaze,
+                        "hrac_2_peniaze": self.hrac_2_peniaze,
+                        "hrac_1_body": self.hrac_1_body,
+                        "hrac_2_body": self.hrac_2_body,
+                        "hrac_1_karty": self.hrac_1_karty,
+                        "hrac_2_karty": self.hrac_2_karty,
+                        "hrac_1_suroviny": self.hrac_1_suroviny,
+                        "hrac_2_suroviny": self.hrac_2_suroviny,
+                        "hrac_1_divy_meno": self.hrac_1_divy_meno,
+                        "hrac_1_divy_aktivne": self.hrac_1_divy_aktivne,
+                        "hrac_2_divy_meno": self.hrac_2_divy_meno,
+                        "hrac_2_divy_aktivne": self.hrac_2_divy_aktivne,
+                        "hrac_1_tokeny": self.hrac_1_tokeny,
+                        "hrac_2_tokeny": self.hrac_2_tokeny}
+
+        with open(metadatafile, 'w') as f:
+            json.dump(vars_to_json, f, indent=2)
+
+    def read_from_meta(self, metadatafile):
+        if not os.path.exists(metadatafile):
+            shutil.copy("utils/default_metadata.json", metadatafile)
+        with open(metadatafile) as metadata:
+            data = json.load(metadata)
+            if data["hra_id"] != 0:
+                self.hra_id = data["hra_id"]
+            if len(data["herne_karty_meno"]) != 0:
+                self.herne_karty_meno = data["herne_karty_meno"]
+            self.herne_karty_alias = data["herne_karty_alias"]
+            self.odhodene_karty = data["odhodene_karty"]
+            self.boje_stav = data["boje_stav"]
+            self.boje_zrus_peniaze = data["boje_zrus_peniaze"]
+            if len(data["herne_tokeny_meno"]) != 0:
+                self.herne_tokeny_meno = data["herne_tokeny_meno"]
+            if len(data["neherne_tokeny_meno"]) != 0:
+                self.neherne_tokeny_meno = data["neherne_tokeny_meno"]
+            self.tah = data["tah"]
+            self.hraci_mena = data["hraci_mena"]
+            id_hrac = self.hraci_mena.index(data["aktivny_hrac"])
+            self.hraci = cycle(self.hraci_mena)
+            self.aktivny_hrac = islice(self.hraci, id_hrac, None)
+            next(self.aktivny_hrac)
+            self.hrac_1_peniaze = data["hrac_1_peniaze"]
+            self.hrac_2_peniaze = data["hrac_2_peniaze"]
+            self.hrac_1_body = data["hrac_1_body"]
+            self.hrac_2_body = data["hrac_2_body"]
+            self.hrac_1_karty = data["hrac_1_karty"]
+            self.hrac_2_karty = data["hrac_2_karty"]
+            self.hrac_1_suroviny = data["hrac_1_suroviny"]
+            self.hrac_2_suroviny = data["hrac_2_suroviny"]
+            if len(data["hrac_1_divy_meno"]) != 0:
+                self.hrac_1_divy_meno = data["hrac_1_divy_meno"]
+            self.hrac_1_divy_aktivne = data["hrac_1_divy_aktivne"]
+            if len(data["hrac_2_divy_meno"]) != 0:
+                self.hrac_2_divy_meno = data["hrac_2_divy_meno"]
+            self.hrac_2_divy_aktivne = data["hrac_2_divy_aktivne"]
+            self.hrac_1_tokeny = data["hrac_1_tokeny"]
+            self.hrac_2_tokeny = data["hrac_2_tokeny"]
+            metadata.close()
+
+    @staticmethod
+    def generate_game_id():
+        characters = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
+        randomstring = ''
+        # generates 6-character random string. change 6 to whatever you want
+        for i in range(0, 6):
+            randomstring += random.choice(characters)
+        return randomstring
