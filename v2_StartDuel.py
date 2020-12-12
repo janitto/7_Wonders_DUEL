@@ -1,13 +1,3 @@
-import logging
 import seven_wonders_utils
 
-logging.basicConfig(filename='utils/gamelog.log',
-                    filemode='w',
-                    format='%(levelname)s: %(funcName)s() at line %(lineno)d: %(message)s',
-                    level=logging.DEBUG)
-
-logging.info('Game started.')
-
-prvy_vek = seven_wonders_utils.SevenWondersPrvyVek()
-
-logging.info('Game ended.')
+prvy_vek = seven_wonders_utils.SevenWondersPrvyVek("oO6G2O")

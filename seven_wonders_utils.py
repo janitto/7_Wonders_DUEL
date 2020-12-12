@@ -11,6 +11,7 @@ import seven_wonders_divy
 import seven_wonders_tokeny
 import seven_wonders_cards
 
+
 class SevenWondersPrvyVek:
 
     myList = os.listdir("karty/vek_1")
@@ -21,13 +22,13 @@ class SevenWondersPrvyVek:
 
     myList = os.listdir("karty/divy")
     for karta in myList:
-        if os.path.splitext(karta)[1].lower() in ('.jpeg'):
+        if os.path.splitext(karta)[1].lower() == ".jpeg":
             x = karta.split(".")[0].lower()
             exec("%s = seven_wonders_divy.%s" % (x,x))
 
     myList = os.listdir("karty/tokeny")
     for karta in myList:
-        if os.path.splitext(karta)[1].lower() in ('.png'):
+        if os.path.splitext(karta)[1].lower() == ".png":
             x = karta.split(".")[0].lower()
             exec("%s = seven_wonders_tokeny.%s" % (x,x))
 
@@ -66,6 +67,7 @@ class SevenWondersPrvyVek:
     herne_tokeny_meno = []
     neherne_tokeny_meno = []
 
+
     tah = 0
     hraci_mena = ["Jany", "Mima"]
     hraci = []
@@ -85,13 +87,23 @@ class SevenWondersPrvyVek:
     # hrac_2_divy = []
     hrac_2_divy_meno = []
     hrac_2_divy_aktivne = []
-    hrac_1_tokeny = []
+    hrac_1_tokeny = ["Zednarstvi"]
     hrac_2_tokeny = []
 
 
-    def __init__(self):
+    def __init__(self, hra_id=False):
 
-        self.hra_id = self.generate_game_id()
+        if not hra_id:
+            self.hra_id = self.generate_game_id()
+        else:
+            self.hra_id = hra_id
+
+        logging.basicConfig(filename=f'logs/gamelog_{self.hra_id}.log',
+                            filemode='w',
+                            format='%(levelname)s: %(funcName)s() at line %(lineno)d: %(message)s',
+                            level=logging.DEBUG)
+
+        logging.info(f" Hra s ID: {self.hra_id} zacala.")
         self.zisti_rohy()
         self.vyber_herne_karty()
         cv2.namedWindow("7wonders")
@@ -197,7 +209,7 @@ class SevenWondersPrvyVek:
         logging.debug(f"Herne tokeny: {self.herne_tokeny_meno}")
 
     def nakresli_vek(self):
-        self.read_from_meta("input_metadata.json")
+        self.read_from_meta(f"archiv_hier/input_metadata_{self.hra_id}.json")
 
         self.tah = self.tah + 1
 
@@ -444,6 +456,7 @@ class SevenWondersPrvyVek:
                 self.ukaz_error("nespravna_volba")
                 self.nakresli_vek()
         else:
+            os.remove(f"archiv_hier/input_metadata_{self.hra_id}.json")
             logging.info("Koniec veku.")
 
     def validne_karty(self):
@@ -523,12 +536,12 @@ class SevenWondersPrvyVek:
             self.vykonaj_akciu(zvolena_karta, akcia)
             self.herne_karty_meno[self.herne_karty_alias.index(karta)] = None
             self.herne_karty_alias[self.herne_karty_alias.index(karta)] = None
-            self.metadata_to_json("input_metadata.json")
+            self.metadata_to_json(f"archiv_hier/input_metadata_{self.hra_id}.json")
             self.nakresli_vek()
         else:
             logging.error(f"Karta {self.herne_karty_meno[self.herne_karty_alias.index(karta)]} nie je plne odkryta, preto ju nie je mozne zahrat. Znova.")
             self.ukaz_error("nevalidna_karta")
-            self.metadata_to_json("input_metadata.json")
+            #self.metadata_to_json("input_metadata.json")
             self.nakresli_vek()
 
     def zvol_mozosti(self, zvolena_karta):
@@ -586,7 +599,7 @@ class SevenWondersPrvyVek:
             if self.mozem_kupit(hrac, meno_karty):
                 self.kup_kartu(hrac, meno_karty, typ="kartu")
             else:
-                logging.error(f"Kartu {meno_karty} si nemozem kupit. Zvol inu kartu.")
+                logging.error(f"Kartu {meno_karty} si nemozem kupit. Nedostatok penazi. Zvol inu kartu.")
                 self.ukaz_error("nedostatok_penazi")
                 self.nakresli_vek()
 
@@ -643,12 +656,24 @@ class SevenWondersPrvyVek:
 
             # ak je cena kombinovana
         else:
+            #   ak mam token "Zednarstvi, ktory mi zlacnuje modre karty, pridam si 2 suroviny X do poolu"
+            if eval(f"self.{meno_karty.lower()}.farba") == "modra" and "Zednarstvi" in eval(f"self.hrac_{hrac}_tokeny"):
+                suroviny_mam.append("X")
+                suroviny_mam.append("X")
+                logging.debug(f"Hrac vlastni Zednarstvi, do poolu surovin som pridal [X, X]")
+
+            #   ak mam token "Zednarstvi, ktory mi zlacnuje modre karty, pridam si 2 suroviny X do poolu"
+            if eval(f"self.{meno_karty.lower()}.farba") == "div" and "Architektura" in eval(f"self.hrac_{hrac}_tokeny"):
+                suroviny_mam.append("Y")
+                suroviny_mam.append("Y")
+                logging.debug(f"Hrac vlastni Architektura, do poolu surovin som pridal [Y, Y]")
+
             for surovina in cena:
                 try:
                     surovina = int(surovina)
                 except:
                     surovina = surovina
-                logging.debug(f"Typ suroviny{surovina}: {type(surovina)}")
+                logging.debug(f"Typ suroviny {surovina}: {type(surovina)}")
                 if type(surovina) == int:
                     if peniaze_mam >= surovina:
                         peniaze_mam -= surovina
@@ -662,6 +687,14 @@ class SevenWondersPrvyVek:
                     if (suroviny_mam is not None) and (surovina in suroviny_mam):
                         suroviny_mam.remove(surovina)
                         logging.debug(f"Pouzil som: {surovina} z vlastnych zdrojov. Ostalo mi: {suroviny_mam}")
+                        pass
+                    elif "X" in suroviny_mam:
+                        suroviny_mam.remove("X")
+                        logging.debug(f"Pouzil som zlacnenie modrej karty tokenom Zednarstvi.")
+                        pass
+                    elif "Y" in suroviny_mam:
+                        suroviny_mam.remove("Y")
+                        logging.debug(f"Pouzil som zlacnenie postavenia divu tokenom Architektura.")
                         pass
                     elif surovina in ("D", "H", "K") and "W" in suroviny_mam:
                         surovina = "W"
@@ -719,6 +752,9 @@ class SevenWondersPrvyVek:
             return True
 
     def kup_kartu(self, hrac, meno_karty, typ="kartu", zlacnene=None):
+
+        #   prv vyskusam zaskat metadata: kolo bodov, penazi, bojov a bojov mi karta da.
+
         try:
             body_gain = eval("self." + meno_karty.lower() + ".body")
         except:
@@ -747,9 +783,21 @@ class SevenWondersPrvyVek:
         co_mam = eval(f"self.hrac_{hrac}_suroviny").copy()
         cena_karty = eval("self." + meno_karty.lower() + ".cena")
         cena = 0
+        kelo_placela = 0 # zrata kolo penazi zaplati za nakup surovin banke
         if type(cena_karty) == int:
             cena = cena_karty
         else:
+            #   ak mam token "Zednarstvi, ktory mi zlacnuje modre karty, pridam si 2 suroviny X do poolu"
+            if eval(f"self.{meno_karty.lower()}.farba") == "modra" and "Zednarstvi" in eval(f"self.hrac_{hrac}_tokeny"):
+                co_mam.append("X")
+                co_mam.append("X")
+                logging.debug(f"Hrac vlastni Zednarstvi, do poolu surovin som pridal [X, X]")
+
+            #   ak mam token "Zednarstvi, ktory mi zlacnuje modre karty, pridam si 2 suroviny X do poolu"
+            if eval(f"self.{meno_karty.lower()}.farba") == "div" and "Architektura" in eval(f"self.hrac_{hrac}_tokeny"):
+                co_mam.append("Y")
+                co_mam.append("Y")
+                logging.debug(f"Hrac vlastni Architektura, do poolu surovin som pridal [Y, Y]")
             for surovina in cena_karty:
                 try:
                     surovina = int(surovina)
@@ -759,7 +807,6 @@ class SevenWondersPrvyVek:
                     cena = cena + surovina
                 else:
                     if (co_mam is not None) and (surovina in co_mam):
-                        cena = cena + 0
                         co_mam.remove(surovina)
                     elif surovina in ("D", "H", "K") and "W" in co_mam:
                         surovina = "W"
@@ -771,22 +818,35 @@ class SevenWondersPrvyVek:
                         co_mam.remove(surovina)
                     elif surovina == "D" and "Zasobarna_dreva" in eval(f"self.hrac_{hrac}_karty"):
                         cena = cena + 1
+                        kelo_placela += 1
                     elif surovina == "H" and "Zasobarna_hliny" in eval(f"self.hrac_{hrac}_karty"):
                         cena = cena + 1
+                        kelo_placela += 1
                     elif surovina == "K" and "Zasobarna_kamene" in eval(f"self.hrac_{hrac}_karty"):
                         cena = cena + 1
+                        kelo_placela += 1
                     elif surovina in ("P", "S") and "Hostinec" in eval(f"self.hrac_{hrac}_karty"):
                         cena = cena + 1
+                        kelo_placela += 1
                     else:
                         prirazka = eval(f"self.hrac_{oponent}_suroviny.count('{surovina}') + 2")
                         cena = cena + prirazka
+                        kelo_placela += prirazka
+
         if zlacnene is None:
-            cena = cena
             logging.debug(f"Karta nie je zlacnena Divmi alebo Tokenmi. Jej cena je: {cena}")
+            cena = cena
+
         else:
-            cena = zlacnene
             logging.debug(f"Karta je zlacnena na {zlacnene}")
+            cena = zlacnene
         exec(f"self.hrac_{hrac}_peniaze -= {cena}")
+
+        #   ak oponent vlastni token Ekonomie, dam mu peniaze za suroviny
+        if "Ekonomie" in eval(f"self.hrac_{oponent}_tokeny"):
+            exec(f"self.hrac_{oponent}_peniaze += {kelo_placela}")
+            logging.debug(f"Oponent vlastni token Ekonomie, dal som mu {kelo_placela} penazi.")
+
         # dostanem
         #   body
         exec(f"self.hrac_{hrac}_body += {body_gain}")
@@ -797,6 +857,12 @@ class SevenWondersPrvyVek:
             for sur in suroviny_gain:
                 exec(f"self.hrac_{hrac}_suroviny.append('{sur}')")
         #   boje
+
+        #   ak vlastnim token Strategie, zosilnim boje
+        if "Strategie" in eval(f"self.hrac_{hrac}_tokeny"):
+            boje_gain += 1
+            logging.debug(f"Vlastnim token Strategie, zosilnil som ucinok bojov o 1.")
+
         if hrac == 1:   self.boje_stav = self.boje_stav + boje_gain
         if hrac == 2:   self.boje_stav = self.boje_stav - boje_gain
         #   zrusim peniaze
@@ -819,6 +885,7 @@ class SevenWondersPrvyVek:
         #   samotnu kartu
         if typ == "kartu":  eval(f"self.hrac_{hrac}_karty.append(meno_karty)")
         elif typ == "div":  eval(f"self.hrac_{hrac}_divy_aktivne.append(meno_karty)")
+        elif typ == "token":  eval(f"self.hrac_{hrac}_tokeny.append(meno_karty)")
         else:   pass
         logging.info(
             f"{self.aktivny_hrac} kupuje {typ} {meno_karty} za {cena}. Dostal {body_gain} bodov, {peniaze_gain} penazi, suroviny: {suroviny_gain} a boje: {boje_gain}")
@@ -832,11 +899,20 @@ class SevenWondersPrvyVek:
             oponent = 1
 
         efekty = eval(f"self.{div_meno.lower()}.efekt")
+
+        #   ak mam token Teologie a div nema repeater, pridam mu.
+        if "repeat" not in efekty:
+            efekty.append("repeat")
+            logging.debug(f"Vlastnim token Teologie a div nema efekt - repeat - tak efekt bol pridany.")
+
         for efekt in efekty:
             logging.info(f"Efekt divu: {div_meno} - {efekt}")
             if efekt == "repeat":
                 logging.info(f"{self.aktivny_hrac} ide znovu.")
-                next(self.hraci)
+                if hrac == 1: self.aktivny_hrac = self.hraci_mena[1]
+                if hrac == 2: self.aktivny_hrac = self.hraci_mena[0]
+                #next(self.hraci)
+                self.metadata_to_json(f"archiv_hier/input_metadata_{self.hra_id}.json")
             if efekt == "noefekt":
                 pass
             if efekt == "oponent-3p":
@@ -844,34 +920,149 @@ class SevenWondersPrvyVek:
                 exec(f"self.hrac_{oponent}_peniaze -= 3")
             if efekt == "vezmi_kartu_z_discartu":
                 if len(self.odhodene_karty) != 0:
-                    pick_id = random.randint(0, len(self.odhodene_karty) - 1)
-                    logging.info(f"Z diskartu sa berie: {self.odhodene_karty[pick_id]}")
-                    self.kup_kartu(hrac, self.odhodene_karty[pick_id], zlacnene=0)
-                    self.odhodene_karty.pop(pick_id)
+                    self.vezmi_kartu_z_disartu(hrac)
                 else:
                     logging.info("Diskart je prazdny. Efekt prepadol.")
             if efekt == "odhod_oponentovi_hnedu":
                 if self.zrataj_karty(oponent, "hneda") != 0:
-                    pass
+                    self.odhod_hracovi_kartu(oponent, "hneda")
                 else:
                     logging.info("Oponent nema ziadne hnede karty. Efekt prepadol.")
             if efekt == "odhod_oponentovi_sivu":
                 if self.zrataj_karty(oponent, "siva") != 0:
-                    pass
+                    self.odhod_hracovi_kartu(oponent, "siva")
                 else:
                     logging.info("Oponent nema ziadne hnede karty. Efekt prepadol.")
             if efekt == "vezmi_odhodeny_zeleny_zeton":
-                logging.debug(f"Tokeny mimo hry: {self.neherne_tokeny_meno}")
-                pick_id = random.randint(0, len(self.neherne_tokeny_meno) - 1)
-                logging.debug(f"Z tokenov mimo hry sa berie: {self.neherne_tokeny_meno[pick_id]}")
-                self.vyhodnot_token(hrac, self.neherne_tokeny_meno[pick_id])
-                eval(f"self.hrac_{hrac}_tokeny.append('{self.neherne_tokeny_meno[pick_id]}')")
-                self.neherne_tokeny_meno.remove(self.neherne_tokeny_meno[pick_id])
+                self.vezmi_odhodeny_zeleny_token(hrac)
+
+    def vezmi_kartu_z_disartu(self, hrac):
+        cv2.namedWindow("Diskart")
+        diskart_img = np.zeros((200, int(self.monitor_sirka/2), 3), np.uint8)
+        y = 10
+        validne_klavesy = []
+        for idx, odhodena_karta in enumerate(self.odhodene_karty):
+            odhodena_karta = cv2.imread(f"karty/vek_1/{odhodena_karta}.jpg")
+            odhodena_karta = cv2.resize(odhodena_karta, (self.karta_sirka, self.karta_vyska))
+            diskart_img[20:20+self.karta_vyska, y:y+self.karta_sirka] = odhodena_karta
+            cv2.putText(diskart_img, str(idx), (y, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255), 2)
+            y += self.karta_sirka + 10
+            validne_klavesy.append(str(idx))
+        cv2.imshow("Diskart", diskart_img)
+        logging.debug(f"Validne karty na vyber z odhodenych karat su: {validne_klavesy}")
+        key = cv2.waitKey()
+        logging.debug(f"Vyber klavesy: {chr(key)}")
+        if chr(key) in validne_klavesy:
+            logging.info(f"Z diskartu sa berie: {self.odhodene_karty[int(chr(key))]}")
+            self.kup_kartu(hrac, self.odhodene_karty[int(chr(key))], zlacnene=0)
+            self.odhodene_karty.pop(int(chr(key)))
+            cv2.destroyWindow("Diskart")
+        else:
+            logging.error(f"Volba {chr(key)} nie je povolena. Vyber z {validne_klavesy}. Znova.")
+            self.ukaz_error("nespravna_volba")
+            cv2.destroyWindow("Diskart")
+            cv2.destroyWindow("Vyber div")
+            self.nakresli_vek()
+
+    def odhod_hracovi_kartu(self, hrac, typ):
+        cv2.namedWindow("Hracove karty")
+        oponentove_karty_img = np.zeros((200, int(self.monitor_sirka / 2), 3), np.uint8)
+        y = 10
+        validne_klavesy = []
+        hracove_karty = []
+
+        for karta in eval(f"self.hrac_{hrac}_karty"):
+            if eval("self." + karta.lower() + ".farba") == typ:
+                hracove_karty.append(karta)
+
+        logging.debug(f"Hracove karty typu {typ} su: {hracove_karty}")
+        for idx, karta in enumerate(hracove_karty):
+            karta = cv2.imread(f"karty/vek_1/{karta}.jpg")
+            karta = cv2.resize(karta, (self.karta_sirka, self.karta_vyska))
+            oponentove_karty_img[20:20 + self.karta_vyska, y:y + self.karta_sirka] = karta
+            cv2.putText(oponentove_karty_img, str(idx), (y, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255), 2)
+            y += self.karta_sirka + 10
+            validne_klavesy.append(str(idx))
+        cv2.imshow("Hracove karty", oponentove_karty_img)
+        key = cv2.waitKey()
+        if chr(key) in validne_klavesy:
+            logging.info(f"Oponentovi rusim: {hracove_karty[int(chr(key))]}")
+            eval(f"self.hrac_{hrac}_karty.remove('{hracove_karty[int(chr(key))]}')")
+            cv2.destroyWindow("Hracove karty")
+        else:
+            logging.error(f"Volba {chr(key)} nie je povolena. Vyber z {validne_klavesy}. Znova.")
+            self.ukaz_error("nespravna_volba")
+            cv2.destroyWindow("Hracove karty")
+            cv2.destroyWindow("Vyber div")
+            self.nakresli_vek()
+
+    def vezmi_odhodeny_zeleny_token(self, hrac):
+        cv2.namedWindow("Neherne tokeny")
+        neherne_tokeny_img = np.zeros((130, 500, 3), np.uint8)
+        y = 30
+        validne_klavesy = []
+
+        tri_vybrane = random.sample(self.neherne_tokeny_meno, 3)
+        logging.debug(f"3 vybrane tokeny mimo hry: {tri_vybrane}")
+
+
+        for idx, token in enumerate(tri_vybrane):
+            token = cv2.imread(f"karty/tokeny/{token}.png")
+            token = cv2.resize(token, (self.token_rozmer, self.token_rozmer))
+            neherne_tokeny_img[20:20 + self.token_rozmer, y:y + self.token_rozmer] = token
+            cv2.putText(neherne_tokeny_img, str(idx), (y, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255), 2)
+            y += self.token_rozmer + 10
+            validne_klavesy.append(str(idx))
+
+        cv2.imshow("Neherne tokeny", neherne_tokeny_img)
+        logging.debug(f"validne klavesy: {validne_klavesy}")
+        key = cv2.waitKey()
+        if chr(key) in validne_klavesy:
+            logging.info(f"Stlacena klavesa: {chr(key)} Beriem si token: {tri_vybrane[int(chr(key))]}")
+            #eval(f"self.hrac_{hrac}_tokeny.append('{self.neherne_tokeny_meno[int(chr(key))]}')")
+            self.kup_kartu(hrac, tri_vybrane[int(chr(key))], typ="token", zlacnene=0)
+            self.vyhodnot_token(hrac, tri_vybrane[int(chr(key))])
+            self.neherne_tokeny_meno.remove(tri_vybrane[int(chr(key))])
+            cv2.destroyWindow("Neherne tokeny")
+        else:
+            logging.error(f"Volba {chr(key)} nie je povolena. Vyber z {validne_klavesy}. Znova.")
+            self.ukaz_error("nespravna_volba")
+            cv2.destroyWindow("Neherne tokeny")
+            cv2.destroyWindow("Vyber div")
+            self.nakresli_vek()
 
     def vyhodnot_token(self, hrac, token_meno):
         logging.info(f"Vyhodnocujem token: {token_meno}")
-        try:    eval(f"self.{token_meno.lower()}.vyhodnot_efekt()")
-        except: pass
+        try:
+            efekt_tokenu = eval("self." + token_meno.lower() + ".efekt_tokenu")
+            logging.debug(f"Efekt tokenu: {efekt_tokenu}")
+        except:
+            efekt_tokenu = None
+            logging.debug("Token nema specialny efekt.")
+
+        if efekt_tokenu:
+            if efekt_tokenu == "zlacni_divy":
+                #   hotovo v mozem_kupit()
+                pass
+            if efekt_tokenu == "kelo_placela":
+                #   hotovo z kup_kartu()
+                pass
+            if efekt_tokenu == "3_za_kazdy_token":
+                #   vyhodnoti sa na konci hry.
+                pass
+            if efekt_tokenu == "boje+1":
+                #   hotovo v kup_kartu()
+                pass
+            if efekt_tokenu == "repeater_divom":
+                # hotovo v vyhodnot_div()
+                pass
+            if efekt_tokenu == "ak_zadarmo_potom+4p":
+                pass
+            if efekt_tokenu == "pridaj_zeleny_symbol":
+                pass
+            if efekt_tokenu == "zlacni_modre":
+                #   hotovo v mozem_kupit()
+                pass
 
     def zrataj_karty(self, hrac, farba):
         count = 0
@@ -908,6 +1099,7 @@ class SevenWondersPrvyVek:
             cv2.destroyWindow("Error!")
 
     def metadata_to_json(self, metadatafile):
+        logging.debug(f"Obnovujem metadata...")
         vars_to_json = {#"herne_karty": self.herne_karty,
                         "rozohrana_hra": "Ano",
                         "cas_hry": time.strftime("%d/%m/%Y, %H:%M:%S", time.localtime()),
@@ -942,7 +1134,7 @@ class SevenWondersPrvyVek:
 
     def read_from_meta(self, metadatafile):
         if not os.path.exists(metadatafile):
-            shutil.copy("utils/default_metadata.json", metadatafile)
+            shutil.copy("meta/default_metadata.json", metadatafile)
         with open(metadatafile) as metadata:
             data = json.load(metadata)
             if data["hra_id"] != 0:

@@ -2,80 +2,70 @@
 
 class architektura:
     farba = "token"
+    cena = 0
     body = 0
     peniaze = 0
 
-    def vyhodnot_efekt():
-        print("Hello")
+    efekt = ["zlacni_divy"]
 
 class ekonomie:
     farba = "token"
+    cena = 0
     body = 0
     peniaze = 0
-
-    def vyhodnot_efekt(self):
-        print("Hello")
+    efekt_tokenu = ["kelo_placela"]
 
 class filozofie:
     farba = "token"
-    body = 0
+    cena = 0
+    body = 7
     peniaze = 0
-
-    def vyhodnot_efekt(self):
-        print("Hello")
 
 class matematika:
     farba = "token"
+    cena = 0
     body = 0
     peniaze = 0
-
-    def vyhodnot_efekt(self):
-        print("Hello")
+    efekt_tokenu =["3_za_kazdy_token"]
 
 class strategie:
     farba = "token"
+    cena = 0
     body = 0
     peniaze = 0
-
-    def vyhodnot_efekt(self):
-        print("Hello")
+    efekt_tokenu = ["boje+1"]
 
 class teologie:
     farba = "token"
+    cena = 0
     body = 0
     peniaze = 0
-
-    def vyhodnot_efekt(self):
-        print("Hello")
+    efekt_tokenu = ["repeater_divom"]
 
 class urbanismus:
     farba = "token"
+    cena = 0
     body = 0
-    peniaze = 0
+    peniaze = 6
 
-    def vyhodnot_efekt(self):
-        print("Hello")
+    efekt_tokenu = ["ak_zadarmo_potom+4p"]
 
 class zakon:
     farba = "token"
+    cena = 0
     body = 0
     peniaze = 0
-
-    def vyhodnot_efekt(self):
-        print("Hello")
+    efekt_tokenu = ["pridaj_zeleny_symbol"]
 
 class zednarstvi:
     farba = "token"
+    cena = 0
     body = 0
     peniaze = 0
-
-    def vyhodnot_efekt(self):
-        print("Hello")
+    efekt_tokenu = ["zlacni_modre"]
 
 class zemedelstvi:
     farba = "token"
-    body = 0
-    peniaze = 0
-
-    def vyhodnot_efekt(self):
-        print("Hello")
+    cena = 0
+    body = 4
+    peniaze = 6
