@@ -5,6 +5,7 @@ class dilna:
     body = 1
     peniaze = 0
     cena = "P"
+    dvojicka = "Labolator"
 
 class divadlo:
     farba = "modra"
@@ -44,12 +45,14 @@ class lekarna:
     body = 1
     peniaze = 0
     cena = "S"
+    dvojicka = "Skola"
 
 class lekarnik:
     farba = "zelena"
     body = 0
     peniaze = 0
     cena = 2
+    dvojicka = "Osetrovna"
 
 class lis:
     farba = "siva"
@@ -90,6 +93,7 @@ class pisarska_dilna:
     body = 0
     peniaze = 0
     cena = 2
+    dvojicka = "Knihovna"
 
 class prekladiste_dreva:
     farba = "hneda"
@@ -225,12 +229,14 @@ class knihovna:
     body = 2
     peniaze = 0
     cena = ["KDS", "Pisarska_dilna"]
+    dvojicka = "Pisarska_dilna"
 
 class labolator:
     farba = "zelena"
     body = 1
     peniaze = 0
     cena = "DSS"
+    dvojicka = "Dilna"
 
 class lukostrelnice:
     farba = "cervena"
@@ -244,6 +250,7 @@ class osetrovna:
     body = 2
     peniaze = 0
     cena = ["HHK", "Lekarnik"]
+    dvojicka = "Lekarnik"
 
 class pila:
     farba = "hneda"
@@ -276,6 +283,7 @@ class skola:
     body = 1
     peniaze = 0
     cena = "DPP"
+    dvojicka = "Lekarna"
 
 class socha:
     farba = "modra"
