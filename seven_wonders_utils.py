@@ -262,7 +262,7 @@ class SevenWondersPrvyVek:
                     pass
 
         #   nakresli divy sveta hrac 1
-        horny_okraj, lavy_okaj = horny_okraj, self.hrac_1_lavy_okraj[0]
+        horny_okraj, lavy_okaj = horny_okraj_global, self.hrac_1_lavy_okraj[0]
         for idx, div in enumerate(self.hrac_1_divy_meno):
             div_img = cv2.imread(f"karty/divy/{div}.jpeg")
             div_img = cv2.resize(div_img, (div_sirka, div_vyska))
@@ -281,7 +281,7 @@ class SevenWondersPrvyVek:
                 lavy_okaj = lavy_okaj + div_sirka + 20
 
         #   nakresli divy sveta hrac 2
-        horny_okraj, lavy_okaj = horny_okraj, self.hrac_2_lavy_okraj[0]-20
+        horny_okraj, lavy_okaj = horny_okraj_global, self.hrac_2_lavy_okraj[0]-20
         for idx, div in enumerate(self.hrac_2_divy_meno):
             div_img = cv2.imread(f"karty/divy/{div}.jpeg")
             div_img = cv2.resize(div_img, (div_sirka, div_vyska))
@@ -1320,7 +1320,7 @@ class SevenWondersDruhyVek:
                     pass
 
             #   nakresli divy sveta hrac 1
-        horny_okraj, lavy_okaj = horny_okraj, self.hrac_1_lavy_okraj[0]
+        horny_okraj, lavy_okaj = horny_okraj_global, self.hrac_1_lavy_okraj[0]
         for idx, div in enumerate(self.hrac_1_divy_meno):
             div_img = cv2.imread(f"karty/divy/{div}.jpeg")
             div_img = cv2.resize(div_img, (div_sirka, div_vyska))
@@ -1339,7 +1339,7 @@ class SevenWondersDruhyVek:
                 lavy_okaj = lavy_okaj + div_sirka + 20
 
         #   nakresli divy sveta hrac 2
-        horny_okraj, lavy_okaj = horny_okraj, self.hrac_2_lavy_okraj[0] - 20
+        horny_okraj, lavy_okaj = horny_okraj_global, self.hrac_2_lavy_okraj[0] - 20
         for idx, div in enumerate(self.hrac_2_divy_meno):
             div_img = cv2.imread(f"karty/divy/{div}.jpeg")
             div_img = cv2.resize(div_img, (div_sirka, div_vyska))
