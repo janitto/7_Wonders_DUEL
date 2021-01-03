@@ -42,82 +42,56 @@ class SevenWondersPrvyVek:
             x = karta.split(".")[0].lower()
             exec("%s = seven_wonders_tokeny.%s" % (x,x))
 
-    lavy_okraj = []         # sa zistuje v "zisti_rohy"
-
-    hrac_1_horny_okraj_sivohnede = int(monitor_vyska / 2) + 15
-    hrac_1_horny_okraj_zlte = int(monitor_vyska / 2) + 15
-    hrac_1_horny_okraj_modre = int(monitor_vyska / 2) + 15
-    hrac_1_horny_okraj_cervene = int(monitor_vyska / 2) + 15
-    hrac_1_horny_okraj_zelene = int(monitor_vyska / 2) + 15
-    #hrac_1_lavy_okraj = [30, 120, 210, 300, 390]
-    hrac_1_lavy_okraj = [num for num in np.arange(30,400,karta_sirka+10)]
-
-    hrac_2_horny_okraj_sivohnede = int(monitor_vyska / 2) + 15
-    hrac_2_horny_okraj_zlte = int(monitor_vyska / 2) + 15
-    hrac_2_horny_okraj_modre = int(monitor_vyska / 2) + 15
-    hrac_2_horny_okraj_cervene = int(monitor_vyska / 2) + 15
-    hrac_2_horny_okraj_zelene = int(monitor_vyska / 2) + 15
-    hrac_2_lavy_okraj = [1320, 1410, 1500, 1590, monitor_sirka - 30 - karta_sirka - 10]
-
-    herne_karty_meno = []
-    herne_karty_alias = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t"]
-
-    odhodene_karty = []
-    boje_stav = 9
-    boje_zrus_peniaze = [None, 5, 5, 5, 2, 2, 2, None, None, None, None, None, 2, 2, 2, 5, 5, 5, None]
-    herne_tokeny_meno = []
-    neherne_tokeny_meno = []
-
-    hra_id = None
-    tah = 0
-    hraci_mena = ["Jany", "Mima"]
-    hraci = []
-    aktivny_hrac = []
-
-    hrac_1_peniaze = 7
-    hrac_2_peniaze = 7
-    hrac_1_body = 0
-    hrac_2_body = 0
-    hrac_1_karty = []
-    hrac_2_karty = []
-    hrac_1_suroviny = []
-    hrac_2_suroviny = []
     hrac_1_divy_meno = []
     hrac_1_divy_aktivne = []
     hrac_2_divy_meno = []
     hrac_2_divy_aktivne = []
-    hrac_1_tokeny = []
-    hrac_2_tokeny = []
-
 
     def __init__(self, hra_id):
+        logging.info(f" Hra s ID: {hra_id} zacala.")
 
+        self.lavy_okraj = []
+
+        self.hrac_1_horny_okraj_sivohnede = int(monitor_vyska / 2) + 15
+        self.hrac_1_horny_okraj_zlte = int(monitor_vyska / 2) + 15
+        self.hrac_1_horny_okraj_modre = int(monitor_vyska / 2) + 15
+        self.hrac_1_horny_okraj_cervene = int(monitor_vyska / 2) + 15
+        self.hrac_1_horny_okraj_zelene = int(monitor_vyska / 2) + 15
+        self.hrac_1_lavy_okraj = [num for num in np.arange(30, 400, karta_sirka + 10)]
+        self.hrac_2_horny_okraj_sivohnede = int(monitor_vyska / 2) + 15
+        self.hrac_2_horny_okraj_zlte = int(monitor_vyska / 2) + 15
+        self.hrac_2_horny_okraj_modre = int(monitor_vyska / 2) + 15
+        self.hrac_2_horny_okraj_cervene = int(monitor_vyska / 2) + 15
+        self.hrac_2_horny_okraj_zelene = int(monitor_vyska / 2) + 15
+        self.hrac_2_lavy_okraj = [1320, 1410, 1500, 1590, monitor_sirka - 30 - karta_sirka - 10]
+
+        self.herne_karty_meno = []
+        self.herne_karty_alias = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r","s", "t"]
+
+        self.herne_tokeny_meno = []
+        self.neherne_tokeny_meno = []
         self.hra_id = hra_id
 
-        logging.info(f" Hra s ID: {self.hra_id} zacala.")
         self.zisti_rohy()
-
-        # ak niesu metadata, vyber nove herne karty, tokeny a divy.
-        if not os.path.exists(f"archiv_hier/input_metadata_{self.hra_id}.json"):
-            self.vyber_herne_karty()
-            logging.debug("Herne karty, tokeny a divy boli nanovo vygenerovane.")
-        else:
-            with open(f"archiv_hier/input_metadata_{self.hra_id}.json") as metadata:
-                data = json.load(metadata)
-                tah = data["tah"]
-                metadata.close()
-                if tah == 0:
-                    self.vyber_herne_karty()
-                    logging.debug("Predosla hra bola prazdna, Generujem novu.")
-                else:
-                    logging.debug("Metadata predoslej hry najdene. Obnovujem.")
+        self.vyber_herne_karty()
 
 
-        cv2.namedWindow("7wonders")
-        cv2.moveWindow("7wonders", int(monitor_sirka - monitor_sirka*0.97), int(monitor_vyska - monitor_vyska*0.94))
-
-        #   startuj prve kolo hry, ktore bude nasledne volat dalsie
-        self.nakresli_vek()
+        #   Ak je moznost vyberu karty, nakresli vek.
+        while self.validne_karty():
+            self.nakresli_vek()
+            logging.debug(f"Cakam na vyber. Validne karty: {self.validne_karty()}")
+            key = cv2.waitKey(0)
+            if chr(key) in self.herne_karty_alias:
+                meno_karty = self.herne_karty_meno[self.herne_karty_alias.index(chr(key))]
+                logging.debug(
+                    f"Stlacena klavesa - {chr(key)} - {self.aktivny_hrac} chce vykonat akciu s kartou: {meno_karty}")
+                self.vyber_a_aktivuj_kartu(chr(key))
+            else:
+                logging.error(f"Stlacena klavesa - {chr(key)} - je nevalidna. Validne klavesy su: {self.validne_karty()}")
+                ukaz_error("nespravna_volba")
+                next(self.hraci)
+                self.tah = self.tah - 1
+        logging.info("Koniec veku 1.")
 
     def zisti_rohy(self):
         lavy_okraj = []
@@ -208,7 +182,6 @@ class SevenWondersPrvyVek:
         self.read_from_meta(f"archiv_hier/input_metadata_{self.hra_id}.json")
 
         self.tah = self.tah + 1
-
         self.aktivny_hrac = next(self.hraci)
 
         logging.debug(f"Aktivny hrac: {self.aktivny_hrac}")
@@ -434,24 +407,6 @@ class SevenWondersPrvyVek:
 
         cv2.imshow("7wonders", img)
 
-        logging.debug(f"Cakam na vyber. Validne karty: {self.validne_karty()}")
-        if self.validne_karty():
-            key = cv2.waitKey(0)
-            if chr(key) in self.herne_karty_alias:
-                meno_karty = self.herne_karty_meno[self.herne_karty_alias.index(chr(key))]
-                logging.debug(f"Stlacena klavesa: {chr(key)} {self.aktivny_hrac} chce vykonat akciu s kartou: {meno_karty}")
-                self.vyber_a_aktivuj_kartu(chr(key))
-                #self.nakresli_vek()
-            else:
-                logging.error(f"Vyber karty - {chr(key)} - je nevalidna. Validne karty su: {self.validne_karty()}")
-                ukaz_error("nespravna_volba")
-                next(self.hraci)
-                self.tah = self.tah - 1
-                self.nakresli_vek()
-        else:
-            #os.remove(f"archiv_hier/input_metadata_{self.hra_id}.json")
-            logging.info("Koniec veku 1.")
-
     def validne_karty(self):
         validne_karty = []
         for idx, karta_alias in enumerate(self.herne_karty_alias):
@@ -526,18 +481,17 @@ class SevenWondersPrvyVek:
         if karta in self.validne_karty():
             zvolena_karta = self.herne_karty_meno[self.herne_karty_alias.index(karta)]
             akcia = self.zvol_mozosti(zvolena_karta)
-            self.vykonaj_akciu(zvolena_karta, akcia)
-            self.herne_karty_meno[self.herne_karty_alias.index(karta)] = None
-            self.herne_karty_alias[self.herne_karty_alias.index(karta)] = None
-            self.metadata_to_json(f"archiv_hier/input_metadata_{self.hra_id}.json")
-            self.nakresli_vek()
+            if akcia != "cancel":
+                vysledok_akcie = self.vykonaj_akciu(zvolena_karta, akcia)
+                if vysledok_akcie == "ok":
+                    self.herne_karty_meno[self.herne_karty_alias.index(karta)] = None
+                    self.herne_karty_alias[self.herne_karty_alias.index(karta)] = None
+                    self.metadata_to_json(f"archiv_hier/input_metadata_{self.hra_id}.json")
         else:
             logging.error(f"Karta {self.herne_karty_meno[self.herne_karty_alias.index(karta)]} nie je plne odkryta, preto ju nie je mozne zahrat. Znova.")
             ukaz_error("nevalidna_karta")
             next(self.hraci)
             self.tah = self.tah - 1
-            #self.metadata_to_json("input_metadata.json")
-            self.nakresli_vek()
 
     def zvol_mozosti(self, zvolena_karta):
         cv2.namedWindow("Zvolena karta.")
@@ -569,15 +523,14 @@ class SevenWondersPrvyVek:
             next(self.hraci)
             self.tah = self.tah - 1
             cv2.destroyWindow("Zvolena karta.")
-            self.nakresli_vek()
+            return "cancel"
         else:
             logging.error(f"Stlacena klavesa: {chr(key)} Tato akcia nie je povolena.")
             cv2.destroyWindow("Zvolena karta.")
             ukaz_error("nespravna_volba")
             next(self.hraci)
             self.tah = self.tah - 1
-            self.nakresli_vek()
-            #self.zvol_mozosti(zvolena_karta)
+            return "cancel"
 
     def vykonaj_akciu(self, meno_karty, akcia):
         if self.aktivny_hrac == self.hraci_mena[0]:
@@ -592,16 +545,18 @@ class SevenWondersPrvyVek:
             novy_stav = eval(f"self.hrac_{hrac}_peniaze")
             logging.info(f"{self.aktivny_hrac} ohodil {meno_karty} za {2 + self.zrataj_karty(hrac, 'zlta')} panezi. Novy stav penazi {novy_stav}")
             self.odhodene_karty.append(meno_karty)
+            return "ok"
 
         if akcia == "kup":
             if self.mozem_kupit(hrac, meno_karty):
                 self.kup_kartu(hrac, meno_karty, typ="kartu")
+                return "ok"
             else:
                 logging.error(f"Kartu {meno_karty} si nemozem kupit. Nedostatok penazi. Zvol inu kartu.")
                 ukaz_error("nedostatok_penazi")
                 next(self.hraci)
                 self.tah = self.tah - 1
-                self.nakresli_vek()
+                return "cancel"
 
         if akcia == "postav_div":
             suradnice_sirka = [50, 50+div_sirka + 20, 50, 50+div_sirka + 20]
@@ -623,19 +578,19 @@ class SevenWondersPrvyVek:
                     self.vyhodnot_div(hrac, div_meno)
                     eval(f"self.hrac_{hrac}_divy_aktivne.append('{div_meno}')")
                     cv2.destroyWindow("Vyber div")
+                    return "ok"
                 else:
                     ukaz_error("nedostatok_penazi")
                     next(self.hraci)
                     self.tah = self.tah - 1
                     cv2.destroyWindow("Vyber div")
-                    self.nakresli_vek()
+                    return "cancel"
             else:
                 logging.error(f"Volba {chr(key)} nie je povolena. Vyber z [1, 2, 3, 4]. Znova.")
                 ukaz_error("nespravna_volba")
                 next(self.hraci)
                 self.tah = self.tah - 1
                 cv2.destroyWindow("Vyber div")
-                self.nakresli_vek()
 
     def mozem_kupit(self, hrac, meno_karty):
         cena = eval("self." + meno_karty.lower() + ".cena")
@@ -974,7 +929,7 @@ class SevenWondersPrvyVek:
             self.tah = self.tah - 1
             cv2.destroyWindow("Diskart")
             cv2.destroyWindow("Vyber div")
-            self.nakresli_vek()
+            #self.nakresli_vek()
 
     def odhod_hracovi_kartu(self, hrac, typ):
         cv2.namedWindow("Hracove karty")
@@ -1007,7 +962,7 @@ class SevenWondersPrvyVek:
             self.tah = self.tah - 1
             cv2.destroyWindow("Hracove karty")
             cv2.destroyWindow("Vyber div")
-            self.nakresli_vek()
+            #self.nakresli_vek()
 
     def vezmi_odhodeny_zeleny_token(self, hrac):
         cv2.namedWindow("Neherne tokeny")
@@ -1032,7 +987,6 @@ class SevenWondersPrvyVek:
         key = cv2.waitKey()
         if chr(key) in validne_klavesy:
             logging.debug(f"Stlacena klavesa: {chr(key)} Beriem si token: {tri_vybrane[int(chr(key))]}")
-            #eval(f"self.hrac_{hrac}_tokeny.append('{self.neherne_tokeny_meno[int(chr(key))]}')")
             self.kup_kartu(hrac, tri_vybrane[int(chr(key))], typ="token", zlacnene=0)
             self.vyhodnot_token(hrac, tri_vybrane[int(chr(key))])
             self.neherne_tokeny_meno.remove(tri_vybrane[int(chr(key))])
@@ -1044,7 +998,7 @@ class SevenWondersPrvyVek:
             self.tah = self.tah - 1
             cv2.destroyWindow("Neherne tokeny")
             cv2.destroyWindow("Vyber div")
-            self.nakresli_vek()
+            #self.nakresli_vek()
 
     def vyhodnot_token(self, hrac, token_meno):
         logging.info(f"Vyhodnocujem token: {token_meno}")
@@ -1216,7 +1170,24 @@ class SevenWondersDruhyVek:
 
         self.zisti_rohy()
         self.vyber_herne_karty()
-        self.nakresli_vek()
+
+        #   Ak je moznost vyberu karty, nakresli vek.
+        while self.validne_karty():
+            self.nakresli_vek()
+            logging.debug(f"Cakam na vyber. Validne karty: {self.validne_karty()}")
+            key = cv2.waitKey(0)
+            if chr(key) in self.herne_karty_alias:
+                meno_karty = self.herne_karty_meno[self.herne_karty_alias.index(chr(key))]
+                logging.debug(
+                    f"Stlacena klavesa - {chr(key)} - {self.aktivny_hrac} chce vykonat akciu s kartou: {meno_karty}")
+                self.vyber_a_aktivuj_kartu(chr(key))
+            else:
+                logging.error(
+                    f"Stlacena klavesa - {chr(key)} - je nevalidna. Validne klavesy su: {self.validne_karty()}")
+                ukaz_error("nespravna_volba")
+                next(self.hraci)
+                self.tah = self.tah - 1
+        logging.info("Koniec veku 2.")
 
     def zisti_rohy(self):
         lavy_okraj = []
@@ -1510,25 +1481,6 @@ class SevenWondersDruhyVek:
 
         cv2.imshow("7wonders", img)
 
-        logging.debug(f"Cakam na vyber. Validne karty: {self.validne_karty()}")
-        if self.validne_karty():
-            key = cv2.waitKey(0)
-            if chr(key) in self.herne_karty_alias:
-                meno_karty = self.herne_karty_meno[self.herne_karty_alias.index(chr(key))]
-                logging.debug(
-                    f"Stlacena klavesa: {chr(key)} {self.aktivny_hrac} chce vykonat akciu s kartou: {meno_karty}")
-                self.vyber_a_aktivuj_kartu(chr(key))
-                # self.nakresli_vek()
-            else:
-                logging.error(f"Vyber karty - {chr(key)} - je nevalidna. Validne karty su: {self.validne_karty()}")
-                ukaz_error("nespravna_volba")
-                next(self.hraci)
-                self.tah = self.tah - 1
-                self.nakresli_vek()
-        else:
-            # os.remove(f"archiv_hier/input_metadata_{self.hra_id}.json")
-            logging.info("Koniec veku 2.")
-
     def validne_karty(self):
         validne_karty = []
         for idx, karta_alias in enumerate(self.herne_karty_alias):
@@ -1603,18 +1555,17 @@ class SevenWondersDruhyVek:
         if karta in self.validne_karty():
             zvolena_karta = self.herne_karty_meno[self.herne_karty_alias.index(karta)]
             akcia = self.zvol_mozosti(zvolena_karta)
-            self.vykonaj_akciu(zvolena_karta, akcia)
-            self.herne_karty_meno[self.herne_karty_alias.index(karta)] = None
-            self.herne_karty_alias[self.herne_karty_alias.index(karta)] = None
-            self.metadata_to_json(f"archiv_hier/input_metadata_{self.hra_id}.json")
-            self.nakresli_vek()
+            if akcia != "cancel":
+                vysledok_akcie = self.vykonaj_akciu(zvolena_karta, akcia)
+                if vysledok_akcie == "ok":
+                    self.herne_karty_meno[self.herne_karty_alias.index(karta)] = None
+                    self.herne_karty_alias[self.herne_karty_alias.index(karta)] = None
+                    self.metadata_to_json(f"archiv_hier/input_metadata_{self.hra_id}.json")
         else:
             logging.error(f"Karta {self.herne_karty_meno[self.herne_karty_alias.index(karta)]} nie je plne odkryta, preto ju nie je mozne zahrat. Znova.")
             ukaz_error("nevalidna_karta")
             next(self.hraci)
             self.tah = self.tah - 1
-            #self.metadata_to_json("input_metadata.json")
-            self.nakresli_vek()
 
     def zvol_mozosti(self, zvolena_karta):
         cv2.namedWindow("Zvolena karta.")
@@ -1646,14 +1597,14 @@ class SevenWondersDruhyVek:
             next(self.hraci)
             self.tah = self.tah - 1
             cv2.destroyWindow("Zvolena karta.")
-            self.nakresli_vek()
+            return "cancel"
         else:
             logging.error(f"Stlacena klavesa: {chr(key)} Tato akcia nie je povolena.")
             cv2.destroyWindow("Zvolena karta.")
             ukaz_error("nespravna_volba")
             next(self.hraci)
             self.tah = self.tah - 1
-            self.zvol_mozosti(zvolena_karta)
+            return "cancel"
 
     def read_from_meta(self, metadatafile):
         if not os.path.exists(metadatafile):
@@ -1744,16 +1695,18 @@ class SevenWondersDruhyVek:
             novy_stav = eval(f"self.hrac_{hrac}_peniaze")
             logging.info(f"{self.aktivny_hrac} ohodil {meno_karty} za {2 + self.zrataj_karty(hrac, 'zlta')} panezi. Novy stav penazi {novy_stav}")
             self.odhodene_karty.append(meno_karty)
+            return "ok"
 
         if akcia == "kup":
             if self.mozem_kupit(hrac, meno_karty):
                 self.kup_kartu(hrac, meno_karty, typ="kartu")
+                return "ok"
             else:
                 logging.error(f"Kartu {meno_karty} si nemozem kupit. Nedostatok penazi. Zvol inu kartu.")
                 ukaz_error("nedostatok_penazi")
                 next(self.hraci)
                 self.tah = self.tah - 1
-                self.nakresli_vek()
+                return "cancel"
 
         if akcia == "postav_div":
             suradnice_sirka = [50, 50+div_sirka + 20, 50, 50+div_sirka + 20]
@@ -1775,19 +1728,19 @@ class SevenWondersDruhyVek:
                     self.vyhodnot_div(hrac, div_meno)
                     eval(f"self.hrac_{hrac}_divy_aktivne.append('{div_meno}')")
                     cv2.destroyWindow("Vyber div")
+                    return "ok"
                 else:
                     ukaz_error("nedostatok_penazi")
                     next(self.hraci)
                     self.tah = self.tah - 1
                     cv2.destroyWindow("Vyber div")
-                    self.nakresli_vek()
+                    return "cancel"
             else:
                 logging.error(f"Volba {chr(key)} nie je povolena. Vyber z [1, 2, 3, 4]. Znova.")
                 ukaz_error("nespravna_volba")
                 next(self.hraci)
                 self.tah = self.tah - 1
                 cv2.destroyWindow("Vyber div")
-                self.nakresli_vek()
 
     def mozem_kupit(self, hrac, meno_karty):
         cena = eval("self." + meno_karty.lower() + ".cena")
@@ -2141,7 +2094,7 @@ class SevenWondersDruhyVek:
 
     def vezmi_kartu_z_disartu(self, hrac):
         cv2.namedWindow("Diskart")
-        diskart_img = np.zeros((200, int(monitor_sirka/2), 3), np.uint8)
+        diskart_img = np.zeros((200, monitor_sirka, 3), np.uint8)
         y = 10
         validne_klavesy = []
         for idx, odhodena_karta in enumerate(self.odhodene_karty):
@@ -2166,7 +2119,7 @@ class SevenWondersDruhyVek:
             self.tah = self.tah - 1
             cv2.destroyWindow("Diskart")
             cv2.destroyWindow("Vyber div")
-            self.nakresli_vek()
+            #self.nakresli_vek()
 
     def odhod_hracovi_kartu(self, hrac, typ):
         cv2.namedWindow("Hracove karty")
@@ -2199,7 +2152,7 @@ class SevenWondersDruhyVek:
             self.tah = self.tah - 1
             cv2.destroyWindow("Hracove karty")
             cv2.destroyWindow("Vyber div")
-            self.nakresli_vek()
+            #self.nakresli_vek()
 
     def vezmi_odhodeny_zeleny_token(self, hrac):
         cv2.namedWindow("Neherne tokeny")
@@ -2236,7 +2189,7 @@ class SevenWondersDruhyVek:
             self.tah = self.tah - 1
             cv2.destroyWindow("Neherne tokeny")
             cv2.destroyWindow("Vyber div")
-            self.nakresli_vek()
+            #self.nakresli_vek()
 
     def vezmi_herny_zeleny_token(self, hrac):
         cv2.namedWindow("Herne tokeny")
@@ -2269,7 +2222,7 @@ class SevenWondersDruhyVek:
             self.tah = self.tah - 1
             cv2.destroyWindow("Herne tokeny")
             cv2.destroyWindow("Vyber div")
-            self.nakresli_vek()
+            #self.nakresli_vek()
 
     def vyhodnot_token(self, hrac, token_meno):
         logging.info(f"Vyhodnocujem token: {token_meno}")
@@ -2372,7 +2325,24 @@ class SevenWondersTretiVek:
 
         self.zisti_rohy()
         self.vyber_herne_karty()
-        self.nakresli_vek()
+
+        #   Ak je moznost vyberu karty, nakresli vek.
+        while self.validne_karty():
+            self.nakresli_vek()
+            logging.debug(f"Cakam na vyber. Validne karty: {self.validne_karty()}")
+            key = cv2.waitKey(0)
+            if chr(key) in self.herne_karty_alias:
+                meno_karty = self.herne_karty_meno[self.herne_karty_alias.index(chr(key))]
+                logging.debug(
+                    f"Stlacena klavesa - {chr(key)} - {self.aktivny_hrac} chce vykonat akciu s kartou: {meno_karty}")
+                self.vyber_a_aktivuj_kartu(chr(key))
+            else:
+                logging.error(
+                    f"Stlacena klavesa - {chr(key)} - je nevalidna. Validne klavesy su: {self.validne_karty()}")
+                ukaz_error("nespravna_volba")
+                next(self.hraci)
+                self.tah = self.tah - 1
+        logging.info("Koniec veku 3. Koniec hry.")
 
     def zisti_rohy(self):
         lavy_okraj = []
@@ -2652,24 +2622,6 @@ class SevenWondersTretiVek:
 
         cv2.imshow("7wonders", img)
 
-        logging.debug(f"Cakam na vyber. Validne karty: {self.validne_karty()}")
-        if self.validne_karty():
-            key = cv2.waitKey(0)
-            if chr(key) in self.herne_karty_alias:
-                meno_karty = self.herne_karty_meno[self.herne_karty_alias.index(chr(key))]
-                logging.debug(f"Stlacena klavesa: {chr(key)} {self.aktivny_hrac} chce vykonat akciu s kartou: {meno_karty}")
-                self.vyber_a_aktivuj_kartu(chr(key))
-                #self.nakresli_vek()
-            else:
-                logging.error(f"Vyber karty - {chr(key)} - je nevalidna. Validne karty su: {self.validne_karty()}")
-                ukaz_error("nespravna_volba")
-                next(self.hraci)
-                self.tah = self.tah - 1
-                self.nakresli_vek()
-        else:
-            #os.remove(f"archiv_hier/input_metadata_{self.hra_id}.json")
-            logging.info("Koniec veku 1.")
-
     def validne_karty(self):
         validne_karty = []
         for idx, karta_alias in enumerate(self.herne_karty_alias):
@@ -2744,18 +2696,17 @@ class SevenWondersTretiVek:
         if karta in self.validne_karty():
             zvolena_karta = self.herne_karty_meno[self.herne_karty_alias.index(karta)]
             akcia = self.zvol_mozosti(zvolena_karta)
-            self.vykonaj_akciu(zvolena_karta, akcia)
-            self.herne_karty_meno[self.herne_karty_alias.index(karta)] = None
-            self.herne_karty_alias[self.herne_karty_alias.index(karta)] = None
-            self.metadata_to_json(f"archiv_hier/input_metadata_{self.hra_id}.json")
-            self.nakresli_vek()
+            if akcia != "cancel":
+                vysledok_akcie = self.vykonaj_akciu(zvolena_karta, akcia)
+                if vysledok_akcie == "ok":
+                    self.herne_karty_meno[self.herne_karty_alias.index(karta)] = None
+                    self.herne_karty_alias[self.herne_karty_alias.index(karta)] = None
+                    self.metadata_to_json(f"archiv_hier/input_metadata_{self.hra_id}.json")
         else:
             logging.error(f"Karta {self.herne_karty_meno[self.herne_karty_alias.index(karta)]} nie je plne odkryta, preto ju nie je mozne zahrat. Znova.")
             ukaz_error("nevalidna_karta")
             next(self.hraci)
             self.tah = self.tah - 1
-            #self.metadata_to_json("input_metadata.json")
-            self.nakresli_vek()
 
     def zvol_mozosti(self, zvolena_karta):
         cv2.namedWindow("Zvolena karta.")
@@ -2787,14 +2738,14 @@ class SevenWondersTretiVek:
             next(self.hraci)
             self.tah = self.tah - 1
             cv2.destroyWindow("Zvolena karta.")
-            self.nakresli_vek()
+            return "cancel"
         else:
             logging.error(f"Stlacena klavesa: {chr(key)} Tato akcia nie je povolena.")
             cv2.destroyWindow("Zvolena karta.")
             ukaz_error("nespravna_volba")
             next(self.hraci)
             self.tah = self.tah - 1
-            self.zvol_mozosti(zvolena_karta)
+            return "cancel"
 
     def vykonaj_akciu(self, meno_karty, akcia):
         if self.aktivny_hrac == self.hraci_mena[0]:
@@ -2809,16 +2760,18 @@ class SevenWondersTretiVek:
             novy_stav = eval(f"self.hrac_{hrac}_peniaze")
             logging.info(f"{self.aktivny_hrac} ohodil {meno_karty} za {2 + self.zrataj_karty(hrac, 'zlta')} panezi. Novy stav penazi {novy_stav}")
             self.odhodene_karty.append(meno_karty)
+            return "ok"
 
         if akcia == "kup":
             if self.mozem_kupit(hrac, meno_karty):
                 self.kup_kartu(hrac, meno_karty, typ="kartu")
+                return "ok"
             else:
                 logging.error(f"Kartu {meno_karty} si nemozem kupit. Nedostatok penazi. Zvol inu kartu.")
                 ukaz_error("nedostatok_penazi")
                 next(self.hraci)
                 self.tah = self.tah - 1
-                self.nakresli_vek()
+                return "cancel"
 
         if akcia == "postav_div":
             suradnice_sirka = [50, 50+div_sirka + 20, 50, 50+div_sirka + 20]
@@ -2840,19 +2793,19 @@ class SevenWondersTretiVek:
                     self.vyhodnot_div(hrac, div_meno)
                     eval(f"self.hrac_{hrac}_divy_aktivne.append('{div_meno}')")
                     cv2.destroyWindow("Vyber div")
+                    return "ok"
                 else:
                     ukaz_error("nedostatok_penazi")
                     next(self.hraci)
                     self.tah = self.tah - 1
                     cv2.destroyWindow("Vyber div")
-                    self.nakresli_vek()
+                    return "cancel"
             else:
                 logging.error(f"Volba {chr(key)} nie je povolena. Vyber z [1, 2, 3, 4]. Znova.")
                 ukaz_error("nespravna_volba")
                 next(self.hraci)
                 self.tah = self.tah - 1
                 cv2.destroyWindow("Vyber div")
-                self.nakresli_vek()
 
     def mozem_kupit(self, hrac, meno_karty):
         cena = eval("self." + meno_karty.lower() + ".cena")
@@ -3290,7 +3243,7 @@ class SevenWondersTretiVek:
             self.tah = self.tah - 1
             cv2.destroyWindow("Diskart")
             cv2.destroyWindow("Vyber div")
-            self.nakresli_vek()
+            #self.nakresli_vek()
 
     def odhod_hracovi_kartu(self, hrac, typ):
         cv2.namedWindow("Hracove karty")
@@ -3323,7 +3276,7 @@ class SevenWondersTretiVek:
             self.tah = self.tah - 1
             cv2.destroyWindow("Hracove karty")
             cv2.destroyWindow("Vyber div")
-            self.nakresli_vek()
+            #self.nakresli_vek()
 
     def vezmi_odhodeny_zeleny_token(self, hrac):
         cv2.namedWindow("Neherne tokeny")
@@ -3360,7 +3313,7 @@ class SevenWondersTretiVek:
             self.tah = self.tah - 1
             cv2.destroyWindow("Neherne tokeny")
             cv2.destroyWindow("Vyber div")
-            self.nakresli_vek()
+            #self.nakresli_vek()
 
     def vezmi_herny_zeleny_token(self, hrac):
         cv2.namedWindow("Herne tokeny")
@@ -3393,7 +3346,7 @@ class SevenWondersTretiVek:
             self.tah = self.tah - 1
             cv2.destroyWindow("Herne tokeny")
             cv2.destroyWindow("Vyber div")
-            self.nakresli_vek()
+            #self.nakresli_vek()
 
     def vyhodnot_token(self, hrac, token_meno):
         logging.info(f"Vyhodnocujem token: {token_meno}")
