@@ -310,3 +310,215 @@ class susirna:
     peniaze = 0
     cena = 0
     suroviny = "P"
+
+####### vek 3 #######
+
+class akademie:
+    farba = "zelena"
+    body = 3
+    peniaze = 0
+    cena = "KDSS"
+    dvojicka = "Studovna"
+
+class observator:
+    farba = "zelena"
+    body = 2
+    peniaze = 0
+    cena = ["KPP", "Labolator"]
+    dvojicka = "Univerzita"
+
+class studovna:
+    farba = "zelena"
+    body = 3
+    peniaze = 0
+    cena = "DDSP"
+    dvojicka = "Akademie"
+
+class univerzita:
+    farba = "zelena"
+    body = 2
+    peniaze = 0
+    cena = ["HSP", "Skola"]
+    dvojicka = "Observator"
+
+class arena:
+    farba = "zlta"
+    body = 3
+    peniaze = "X"
+    cena = ["HKD", "Pivovar"]
+
+class majak:
+    farba = "zlta"
+    body = 3
+    peniaze = "?"
+    cena = ["HHS", "Krcma"]
+
+    @staticmethod
+    def vyrataj_penaznu_odmenu(x):
+        return (x * 2)
+
+class obchodni_komora:
+    farba = "zlta"
+    body = 3
+    peniaze = "X"
+    cena = "PP"
+
+    @staticmethod
+    def vyrataj_penaznu_odmenu(x):
+        return (x * 2)
+
+class obelisk:
+    farba = "modra"
+    body = 5
+    peniaze = 0
+    cena = "KKS"
+
+class oblehaci_dilna:
+    farba = "cervena"
+    body = 0
+    peniaze = 0
+    boje = 2
+    cena = ["DDDS", "Lukostrelnice"]
+
+class opevneni:
+    farba = "cervena"
+    body = 0
+    peniaze = 0
+    boje = 2
+    cena = ["KKHP", "Palisada"]
+
+class palac:
+    farba = "modra"
+    body = 7
+    peniaze = 0
+    cena = "HKDSS"
+
+class pantheon:
+    farba = "modra"
+    body = 6
+    peniaze = 0
+    cena = ["HDPP", "Chram"]
+
+class pretorium:
+    farba = "cervena"
+    body = 0
+    boje = 3
+    peniaze = 0
+    cena = 8
+
+class pristav:
+    farba = "zlta"
+    body = 3
+    peniaze = "?"
+    cena = "DSP"
+
+    @staticmethod
+    def vyrataj_penaznu_odmenu(x):
+        return (x * 2)
+
+class radnice:
+    farba = "modra"
+    body = 7
+    peniaze = 0
+    cena = "KKKDD"
+
+class senat:
+    farba = "modra"
+    body = 5
+    peniaze = 0
+    cena = ["HHKP", "Recniste"]
+
+class sklad_zbrani:
+    farba = "cervena"
+    body = 0
+    peniaze = 0
+    boje = 3
+    cena = "HHHDD"
+
+class zahrady:
+    farba = "modra"
+    body = 6
+    peniaze = 0
+    cena = ["HHDD", "Socha"]
+
+class zavodiste:
+    farba = "cervena"
+    body = 0
+    peniaze = 0
+    boje = 2
+    cena = ["HHKK", "Cviciste"]
+
+class zbrojnice:
+    farba = "zlta"
+    body = 3
+    peniaze = "X"
+    cena = "KKS"
+
+    @staticmethod
+    def vyrataj_penaznu_odmenu(x):
+        return (x * 2)
+
+####### cechy #######
+
+class cech_lichvaru:
+    farba = "fialova"
+    cena = "KKDD"
+    peniaze = "?"
+
+    @staticmethod
+    def vyrataj_penaznu_odmenu(x):
+        return (x)
+
+class cech_lodaru:
+    farba = "fialova"
+    cena = "HKSP"
+    peniaze = "?"
+
+    @staticmethod
+    def vyrataj_penaznu_odmenu(x):
+        return (x)
+
+class cech_obchodniku:
+    farba = "fialova"
+    cena = "HDSP"
+    peniaze = "?"
+
+    @staticmethod
+    def vyrataj_penaznu_odmenu(x):
+        return (x)
+
+class cech_stavitelu:
+    farba = "fialova"
+    cena = "KKHDS"
+    peniaze = "?"
+
+    @staticmethod
+    def vyrataj_penaznu_odmenu(x):
+        return (x)
+
+class cech_taktiku:
+    farba = "fialova"
+    cena = "KKHP"
+    peniaze = "?"
+
+    @staticmethod
+    def vyrataj_penaznu_odmenu(x):
+        return (x)
+
+class cech_uredniku:
+    farba = "fialova"
+    cena = "DDHP"
+    peniaze = "?"
+
+    @staticmethod
+    def vyrataj_penaznu_odmenu(x):
+        return (x)
+
+class cech_vedcu:
+    farba = "fialova"
+    cena = "HHDD"
+    peniaze = "?"
+
+    @staticmethod
+    def vyrataj_penaznu_odmenu(x):
+        return (x)

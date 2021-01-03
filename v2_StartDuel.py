@@ -32,10 +32,14 @@ if os.path.exists(metadata):
 if vek == 1:
     prvy_vek = seven_wonders_utils.SevenWondersPrvyVek(hra_id)
     druhy_vek = seven_wonders_utils.SevenWondersDruhyVek(hra_id)
+    treti_vek = seven_wonders_utils.SevenWondersTretiVek(hra_id)
 elif vek == 2:
     druhy_vek = seven_wonders_utils.SevenWondersDruhyVek(hra_id)
-    print("Zacinam 3. vek")
+    treti_vek = seven_wonders_utils.SevenWondersTretiVek(hra_id)
+elif vek == 3:
+    treti_vek = seven_wonders_utils.SevenWondersTretiVek(hra_id)
 else:
-    print("Neviem kde zacat")
+    logging.error(f"Vek {vek} nie je spravny.")
+
 
 
