@@ -21,6 +21,8 @@ div_sirka = int(div_vyska * 1.5)
 token_rozmer = 80
 horny_okraj_global = 50
 
+cv2.namedWindow("7wonders")
+cv2.moveWindow("7wonders", 50, 50)
 
 class SevenWondersPrvyVek:
 
@@ -75,6 +77,7 @@ class SevenWondersPrvyVek:
         self.zisti_rohy()
         self.vyber_herne_karty()
 
+        self.read_from_meta(f"archiv_hier/input_metadata_{self.hra_id}.json")
 
         #   Ak je moznost vyberu karty, nakresli vek.
         while self.validne_karty():
@@ -92,6 +95,15 @@ class SevenWondersPrvyVek:
                 next(self.hraci)
                 self.tah = self.tah - 1
         logging.info("Koniec veku 1.")
+        if self.boje_stav < 9:
+            logging.info(f"Vek 2 zacne {self.hraci_mena[0]}")
+            self.aktivny_hrac = self.hraci_mena[1]
+        elif self.boje_stav > 9:
+            logging.info(f"Vek 2 zacne {self.hraci_mena[1]}")
+            self.aktivny_hrac = self.hraci_mena[0]
+        else:
+            pass
+        self.metadata_to_json(f"archiv_hier/input_metadata_{self.hra_id}.json")
 
     def zisti_rohy(self):
         lavy_okraj = []
@@ -111,24 +123,18 @@ class SevenWondersPrvyVek:
         self.lavy_okraj = lavy_okraj
 
     def vyber_herne_karty(self):
-        #   herne karty
-        vsetky_karty = []
         vsetky_karty_meno = []
         herne_karty_meno = []
         myList = os.listdir("karty/vek_1")
         for karta in myList:
             if os.path.splitext(karta)[1].lower() in ('.jpg', '.jpeg'):
-                curImg = cv2.imread(f"karty/vek_1/{karta}")
-                curImg = cv2.resize(curImg, (karta_sirka, karta_vyska))
-                vsetky_karty.append(curImg)
                 vsetky_karty_meno.append(karta.split(".")[0])
             else:
                 logging.warning(f"{karta} ignorovana. Nema priponu jpg ani jpeg.")
 
         for i in range(0, 20):
-            pick_id = random.randint(0, len(vsetky_karty) - 1)
+            pick_id = random.randint(0, len(vsetky_karty_meno) - 1)
             herne_karty_meno.append(vsetky_karty_meno[pick_id])
-            vsetky_karty.pop(pick_id)
             vsetky_karty_meno.pop(pick_id)
 
         self.herne_karty_meno = herne_karty_meno
@@ -877,8 +883,7 @@ class SevenWondersPrvyVek:
                 logging.info(f"{self.aktivny_hrac} ide znovu.")
                 if hrac == 1: self.aktivny_hrac = self.hraci_mena[1]
                 if hrac == 2: self.aktivny_hrac = self.hraci_mena[0]
-                #next(self.hraci)
-                self.metadata_to_json(f"archiv_hier/input_metadata_{self.hra_id}.json")
+                #self.metadata_to_json(f"archiv_hier/input_metadata_{self.hra_id}.json")
             if efekt == "noefekt":
                 pass
             if efekt == "oponent-3p":
@@ -1097,6 +1102,9 @@ class SevenWondersPrvyVek:
             id_hrac = self.hraci_mena.index(data["aktivny_hrac"])
             self.hraci = cycle(self.hraci_mena)
             self.aktivny_hrac = islice(self.hraci, id_hrac, None)
+            if data["rozohrana_hra"] == "Nie":
+                nahodny_hrac = random.randrange(2)
+                self.aktivny_hrac = islice(self.hraci, nahodny_hrac, None)
             next(self.aktivny_hrac)
             self.hrac_1_peniaze = data["hrac_1_peniaze"]
             self.hrac_2_peniaze = data["hrac_2_peniaze"]
@@ -1167,9 +1175,10 @@ class SevenWondersDruhyVek:
         self.neherne_tokeny_meno = []
         self.hra_id = hra_id
 
-
         self.zisti_rohy()
         self.vyber_herne_karty()
+
+        self.read_from_meta(f"archiv_hier/input_metadata_{self.hra_id}.json")
 
         #   Ak je moznost vyberu karty, nakresli vek.
         while self.validne_karty():
@@ -1187,7 +1196,22 @@ class SevenWondersDruhyVek:
                 ukaz_error("nespravna_volba")
                 next(self.hraci)
                 self.tah = self.tah - 1
+            if self.boje_stav == 18:
+                logging.info(f"Koniec hry. {self.hraci_mena[0]} vyhral na boje. Gratulujem.")
+                sys.exit()
+            elif self.boje_stav == 0:
+                logging.info(f"Koniec hry. {self.hraci_mena[1]} vyhral na boje. Gratulujem.")
+                sys.exit()
         logging.info("Koniec veku 2.")
+        if self.boje_stav < 9:
+            logging.info(f"Vek 3 zacne {self.hraci_mena[0]}")
+            self.aktivny_hrac = self.hraci_mena[1]
+        elif self.boje_stav > 9:
+            logging.info(f"Vek 3 zacne {self.hraci_mena[1]}")
+            self.aktivny_hrac = self.hraci_mena[0]
+        else:
+            pass
+        self.metadata_to_json(f"archiv_hier/input_metadata_{self.hra_id}.json")
 
     def zisti_rohy(self):
         lavy_okraj = []
@@ -2068,7 +2092,7 @@ class SevenWondersDruhyVek:
                 if hrac == 1: self.aktivny_hrac = self.hraci_mena[1]
                 if hrac == 2: self.aktivny_hrac = self.hraci_mena[0]
                 #next(self.hraci)
-                self.metadata_to_json(f"archiv_hier/input_metadata_{self.hra_id}.json")
+                #self.metadata_to_json(f"archiv_hier/input_metadata_{self.hra_id}.json")
             if efekt == "noefekt":
                 pass
             if efekt == "oponent-3p":
@@ -2123,7 +2147,7 @@ class SevenWondersDruhyVek:
 
     def odhod_hracovi_kartu(self, hrac, typ):
         cv2.namedWindow("Hracove karty")
-        oponentove_karty_img = np.zeros((200, int(monitor_sirka / 2), 3), np.uint8)
+        oponentove_karty_img = np.zeros((200, monitor_sirka, 3), np.uint8)
         y = 10
         validne_klavesy = []
         hracove_karty = []
@@ -2326,6 +2350,8 @@ class SevenWondersTretiVek:
         self.zisti_rohy()
         self.vyber_herne_karty()
 
+        self.read_from_meta(f"archiv_hier/input_metadata_{self.hra_id}.json")
+
         #   Ak je moznost vyberu karty, nakresli vek.
         while self.validne_karty():
             self.nakresli_vek()
@@ -2342,6 +2368,12 @@ class SevenWondersTretiVek:
                 ukaz_error("nespravna_volba")
                 next(self.hraci)
                 self.tah = self.tah - 1
+            if self.boje_stav == 18:
+                logging.info(f"Koniec hry. {self.hraci_mena[0]} vyhral na boje. Gratulujem.")
+                sys.exit()
+            elif self.boje_stav == 0:
+                logging.info(f"Koniec hry. {self.hraci_mena[1]} vyhral na boje. Gratulujem.")
+                sys.exit()
         logging.info("Koniec veku 3. Koniec hry.")
 
     def zisti_rohy(self):
@@ -3192,7 +3224,7 @@ class SevenWondersTretiVek:
                 if hrac == 1: self.aktivny_hrac = self.hraci_mena[1]
                 if hrac == 2: self.aktivny_hrac = self.hraci_mena[0]
                 #next(self.hraci)
-                self.metadata_to_json(f"archiv_hier/input_metadata_{self.hra_id}.json")
+                #self.metadata_to_json(f"archiv_hier/input_metadata_{self.hra_id}.json")
             if efekt == "noefekt":
                 pass
             if efekt == "oponent-3p":
@@ -3218,7 +3250,7 @@ class SevenWondersTretiVek:
 
     def vezmi_kartu_z_disartu(self, hrac):
         cv2.namedWindow("Diskart")
-        diskart_img = np.zeros((200, int(monitor_sirka/2), 3), np.uint8)
+        diskart_img = np.zeros((200, monitor_sirka, 3), np.uint8)
         y = 10
         validne_klavesy = []
         for idx, odhodena_karta in enumerate(self.odhodene_karty):
@@ -3247,7 +3279,7 @@ class SevenWondersTretiVek:
 
     def odhod_hracovi_kartu(self, hrac, typ):
         cv2.namedWindow("Hracove karty")
-        oponentove_karty_img = np.zeros((200, int(monitor_sirka / 2), 3), np.uint8)
+        oponentove_karty_img = np.zeros((200, monitor_sirka, 3), np.uint8)
         y = 10
         validne_klavesy = []
         hracove_karty = []
