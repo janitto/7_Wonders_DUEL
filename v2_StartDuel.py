@@ -3,6 +3,7 @@ import random
 import logging
 import json
 import os
+from DUEL_Network import Network
 
 
 def generate_game_id():
@@ -14,20 +15,19 @@ def generate_game_id():
     return randomstring
 
 hra_id = generate_game_id()
-hra_id = "YRX7DP"
+#hra_id = "YRX7DP"
 
 logging.basicConfig(filename=f'logs/gamelog_{hra_id}.log',
                     filemode='a',
                     format='%(levelname)s: %(funcName)s() at line %(lineno)d: %(message)s',
                     level=logging.DEBUG)
 
-vek = 1
-metadata = f"archiv_hier/input_metadata_{hra_id}.json"
-if os.path.exists(metadata):
-    with open(metadata) as m:
-        data = json.load(m)
-        vek = data["vek"]
-        m.close()
+net = Network(hrac="Jan", hra_id=hra_id)
+seven_wonders_utils.net = net
+
+
+metadata = net.get()
+vek = metadata["vek"]
 
 if vek == 1:
     prvy_vek = seven_wonders_utils.SevenWondersPrvyVek(hra_id)

@@ -12,6 +12,7 @@ import seven_wonders_divy
 import seven_wonders_tokeny
 import seven_wonders_cards
 
+
 monitor_sirka = 1800
 monitor_vyska = 880
 karta_sirka = 80
@@ -1077,10 +1078,13 @@ class SevenWondersPrvyVek:
                         "hrac_1_tokeny": self.hrac_1_tokeny,
                         "hrac_2_tokeny": self.hrac_2_tokeny}
 
+        print(f"Metadata na server {net.send(vars_to_json)}")
+
         with open(metadatafile, 'w') as f:
             json.dump(vars_to_json, f, indent=2)
 
     def read_from_meta(self, metadatafile):
+        print("Metadata zo servra", net.get())
         if not os.path.exists(metadatafile):
             shutil.copy("meta/default_metadata.json", metadatafile)
         with open(metadatafile) as metadata:
@@ -1196,21 +1200,9 @@ class SevenWondersDruhyVek:
                 ukaz_error("nespravna_volba")
                 next(self.hraci)
                 self.tah = self.tah - 1
-            if self.boje_stav == 18:
-                logging.info(f"Koniec hry. {self.hraci_mena[0]} vyhral na boje. Gratulujem.")
-                sys.exit()
-            elif self.boje_stav == 0:
-                logging.info(f"Koniec hry. {self.hraci_mena[1]} vyhral na boje. Gratulujem.")
-                sys.exit()
+
         logging.info("Koniec veku 2.")
-        if self.boje_stav < 9:
-            logging.info(f"Vek 3 zacne {self.hraci_mena[0]}")
-            self.aktivny_hrac = self.hraci_mena[1]
-        elif self.boje_stav > 9:
-            logging.info(f"Vek 3 zacne {self.hraci_mena[1]}")
-            self.aktivny_hrac = self.hraci_mena[0]
-        else:
-            pass
+
         self.metadata_to_json(f"archiv_hier/input_metadata_{self.hra_id}.json")
 
     def zisti_rohy(self):
@@ -2064,7 +2056,7 @@ class SevenWondersDruhyVek:
         if self.boje_stav <= 0:
             logging.info(f"Hrac {self.hraci_mena[1]} vyhral na boje.")
             sys.exit(0)
-        elif self.boje_stav >= 19:
+        elif self.boje_stav >= 18:
             logging.info(f"Hrac {self.hraci_mena[0]} vyhral na boje.")
             sys.exit(0)
         else:
@@ -2368,13 +2360,81 @@ class SevenWondersTretiVek:
                 ukaz_error("nespravna_volba")
                 next(self.hraci)
                 self.tah = self.tah - 1
-            if self.boje_stav == 18:
-                logging.info(f"Koniec hry. {self.hraci_mena[0]} vyhral na boje. Gratulujem.")
-                sys.exit()
-            elif self.boje_stav == 0:
-                logging.info(f"Koniec hry. {self.hraci_mena[1]} vyhral na boje. Gratulujem.")
-                sys.exit()
-        logging.info("Koniec veku 3. Koniec hry.")
+
+        logging.info("Koniec veku 3. Koniec hry. Vyhodnocujem.")
+
+        if "Cech_lichvaru" in self.hrac_1_karty:
+            if self.hrac_1_peniaze > self.hrac_2_peniaze:
+                self.hrac_1_body += int(self.hrac_1_peniaze/3)
+                logging.debug(f"Hrac {self.hraci_mena[0]} ziskala kvoli Cechu lichvaru {int(self.hrac_1_peniaze/3)} bodov.")
+            else:
+                self.hrac_1_body += int(self.hrac_2_peniaze/3)
+                logging.debug(f"Hrac {self.hraci_mena[0]} ziskala kvoli Cechu lichvaru {int(self.hrac_2_peniaze/3)} bodov.")
+        if "Cech_lichvaru" in self.hrac_2_karty:
+            if self.hrac_1_peniaze > self.hrac_2_peniaze:
+                self.hrac_2_body += int(self.hrac_1_peniaze/3)
+                logging.debug(f"Hrac {self.hraci_mena[1]} ziskala kvoli Cechu lichvaru {int(self.hrac_1_peniaze/3)} bodov.")
+            else:
+                self.hrac_2_body += int(self.hrac_2_peniaze/3)
+                logging.debug(f"Hrac {self.hraci_mena[1]} ziskala kvoli Cechu lichvaru {int(self.hrac_2_peniaze/3)} bodov.")
+
+        if "Cech_lodaru" in self.hrac_1_karty:
+            hrac_1_sivohnede = self.zrataj_karty(1, "siva") + self.zrataj_karty(1, "hneda")
+            hrac_2_sivohnede = self.zrataj_karty(2, "siva") + self.zrataj_karty(2, "hneda")
+            if hrac_1_sivohnede > hrac_2_sivohnede:
+                self.hrac_1_body += hrac_1_sivohnede
+                logging.debug(f"Hrac {self.hraci_mena[0]} ziskala kvoli Cechu lodaru {hrac_1_sivohnede} bodov.")
+            else:
+                self.hrac_1_body += hrac_2_sivohnede
+                logging.debug(f"Hrac {self.hraci_mena[0]} ziskala kvoli Cechu lodaru {hrac_2_sivohnede} bodov.")
+        if "Cech_lodaru" in self.hrac_2_karty:
+            hrac_1_sivohnede = self.zrataj_karty(1, "siva") + self.zrataj_karty(1, "hneda")
+            hrac_2_sivohnede = self.zrataj_karty(2, "siva") + self.zrataj_karty(2, "hneda")
+            if hrac_1_sivohnede > hrac_2_sivohnede:
+                self.hrac_2_body += hrac_1_sivohnede
+                logging.debug(f"Hrac {self.hraci_mena[1]} ziskala kvoli Cechu lodaru {hrac_1_sivohnede} bodov.")
+            else:
+                self.hrac_2_body += hrac_2_sivohnede
+                logging.debug(f"Hrac {self.hraci_mena[1]} ziskala kvoli Cechu lodaru {hrac_2_sivohnede} bodov.")
+
+        if "Cech_obchodniku" in self.hrac_1_karty:
+            hrac_1_zlte = self.zrataj_karty(1, "zlta")
+            hrac_2_zlte = self.zrataj_karty(2, "zlta")
+            if hrac_1_zlte > hrac_2_zlte:
+                self.hrac_1_body += hrac_1_zlte
+                logging.debug(f"Hrac {self.hraci_mena[0]} ziskala kvoli Cechu obchodniku {hrac_1_zlte} bodov.")
+            else:
+                self.hrac_1_body += hrac_2_zlte
+                logging.debug(f"Hrac {self.hraci_mena[0]} ziskala kvoli Cechu obchodniku {hrac_2_zlte} bodov.")
+        if "Cech_obchodniku" in self.hrac_2_karty:
+            hrac_1_zlte = self.zrataj_karty(1, "zlta")
+            hrac_2_zlte = self.zrataj_karty(2, "zlta")
+            if hrac_1_zlte > hrac_2_zlte:
+                self.hrac_2_body += hrac_1_zlte
+                logging.debug(f"Hrac {self.hraci_mena[1]} ziskala kvoli Cechu obchodniku {hrac_1_zlte} bodov.")
+            else:
+                self.hrac_2_body += hrac_2_zlte
+                logging.debug(f"Hrac {self.hraci_mena[1]} ziskala kvoli Cechu obchodniku {hrac_2_zlte} bodov.")
+
+        if "Cech_stavitelu" in self.hrac_1_karty:
+            hrac_1_pocet_divov = self.zrataj_karty(1, "div")
+            hrac_2_pocet_divov = self.zrataj_karty(2, "div")
+            if hrac_1_pocet_divov > hrac_2_pocet_divov:
+                self.hrac_1_body += hrac_1_pocet_divov*2
+                logging.debug(f"Hrac {self.hraci_mena[0]} ziskala kvoli Cechu stavitelu {hrac_1_pocet_divov*2} bodov.")
+            else:
+                self.hrac_1_body += hrac_2_pocet_divov*2
+                logging.debug(f"Hrac {self.hraci_mena[0]} ziskala kvoli Cechu stavitelu {hrac_2_pocet_divov*2} bodov.")
+        if "Cech_stavitelu" in self.hrac_2_karty:
+            hrac_1_pocet_divov = self.zrataj_karty(1, "div")
+            hrac_2_pocet_divov = self.zrataj_karty(2, "div")
+            if hrac_1_pocet_divov > hrac_2_pocet_divov:
+                self.hrac_2_body += hrac_1_pocet_divov*2
+                logging.debug(f"Hrac {self.hraci_mena[1]} ziskala kvoli Cechu stavitelu {hrac_1_pocet_divov*2} bodov.")
+            else:
+                self.hrac_2_body += hrac_2_pocet_divov*2
+                logging.debug(f"Hrac {self.hraci_mena[1]} ziskala kvoli Cechu stavitelu {hrac_2_pocet_divov*2} bodov.")
+
 
     def zisti_rohy(self):
         lavy_okraj = []
@@ -2560,7 +2620,7 @@ class SevenWondersTretiVek:
             elif eval("self." + karta.lower() + ".farba") == "cervena":
                 img[cerveny_okraj:cerveny_okraj + karta_vyska, self.hrac_1_lavy_okraj[3]:self.hrac_1_lavy_okraj[3] + karta_sirka] = karta_img
                 cerveny_okraj += 25
-            elif eval("self." + karta.lower() + ".farba") == "zelena" or eval("self."+karta.lower()+".fialova"):
+            elif eval("self." + karta.lower() + ".farba") == "zelena" or eval("self." + karta.lower() + ".farba") == "fialova":
                 img[zeleny_okraj:zeleny_okraj + karta_vyska, self.hrac_1_lavy_okraj[4]:self.hrac_1_lavy_okraj[4] + karta_sirka] = karta_img
                 zeleny_okraj += 25
 
@@ -3030,7 +3090,6 @@ class SevenWondersTretiVek:
                 else:
                     parameter = oponent_param
                     logging.debug(f"Oponent ma viac zltych kariet.")
-
             elif meno_karty == "Cech_taktiku":
                 hrac_param = self.zrataj_karty(hrac, "cervena")
                 oponent_param = self.zrataj_karty(oponent, "cervena")
@@ -3196,7 +3255,7 @@ class SevenWondersTretiVek:
         if self.boje_stav <= 0:
             logging.info(f"Hrac {self.hraci_mena[1]} vyhral na boje.")
             sys.exit(0)
-        elif self.boje_stav >= 19:
+        elif self.boje_stav >= 18:
             logging.info(f"Hrac {self.hraci_mena[0]} vyhral na boje.")
             sys.exit(0)
         else:

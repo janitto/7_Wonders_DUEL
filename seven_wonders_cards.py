@@ -463,7 +463,6 @@ class zbrojnice:
 class cech_lichvaru:
     farba = "fialova"
     cena = "KKDD"
-    peniaze = "?"
 
     @staticmethod
     def vyrataj_penaznu_odmenu(x):
@@ -490,7 +489,6 @@ class cech_obchodniku:
 class cech_stavitelu:
     farba = "fialova"
     cena = "KKHDS"
-    peniaze = "?"
 
     @staticmethod
     def vyrataj_penaznu_odmenu(x):
