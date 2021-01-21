@@ -6,12 +6,14 @@ class Network:
 
     def __init__(self, hrac, hra_id):
         self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.host = "127.0.0.1"
+        self.host = "192.168.0.105"
         self.port = 5555
         self.addr = (self.host, self.port)
         self.hrac = hrac
         self.hra_id = hra_id
-        logging.info(self.connect())
+        welcome_message = self.connect()
+        self.poradove_cislo = welcome_message.split(":")[1]
+        logging.info(welcome_message)
 
 
     def connect(self):
