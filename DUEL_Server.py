@@ -45,6 +45,7 @@ def threaded_client(conn, addr):
                 metadata["hraci_mena"][1] = "?"
             else:
                 metadata["hraci_mena"][1] = meno
+
     else:
         if pocet_hracov == 1:
             with open("meta/default_metadata.json") as m:
@@ -55,7 +56,8 @@ def threaded_client(conn, addr):
             metadata["hraci_mena"][1] = meno
             #   hru zacina nahodny hrac
             nahodny_hrac = random.randrange(2)
-            metadata["aktivny_hrac"] = metadata["hraci_mena"][nahodny_hrac]
+            metadata["naposledy_hral"] = metadata["hraci_mena"][nahodny_hrac]
+
 
 
     while True:
@@ -69,9 +71,11 @@ def threaded_client(conn, addr):
                 if data != "get":
                     print("Updatujem metadata na:", data)
                     metadata = json.loads(data)
+                    # vytvor metadatovy subor na servri.
+                    with open(f"archiv_hier/input_metadata_{hra_id}.json", 'w') as f:
+                        json.dump(metadata, f, indent=2)
                     reply = pickle.dumps(metadata)
                 else:
-                    print("Ziskavam metadata", metadata)
                     reply = pickle.dumps(metadata)
             conn.sendall(reply)
         except:

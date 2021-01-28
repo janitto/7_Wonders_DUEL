@@ -2,8 +2,6 @@ import seven_wonders_utils
 import random
 import logging
 from time import sleep
-import json
-import os
 from DUEL_Network import Network
 
 
@@ -22,7 +20,7 @@ ja_som = "Jan"
 logging.basicConfig(filename=f'logs/gamelog_{hra_id}_{ja_som}.log',
                     filemode='a',
                     format='%(levelname)s: %(funcName)s() at line %(lineno)d: %(message)s',
-                    level=logging.INFO)
+                    level=logging.DEBUG)
 
 net = Network(hrac=ja_som, hra_id=hra_id)
 

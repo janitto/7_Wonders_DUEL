@@ -2,6 +2,7 @@
 
 class dilna:
     farba = "zelena"
+    symbol = "triangel"
     body = 1
     peniaze = 0
     cena = "P"
@@ -42,6 +43,7 @@ class lazne:
 
 class lekarna:
     farba = "zelena"
+    symbol = "koleso"
     body = 1
     peniaze = 0
     cena = "S"
@@ -49,6 +51,7 @@ class lekarna:
 
 class lekarnik:
     farba = "zelena"
+    symbol = "miska"
     body = 0
     peniaze = 0
     cena = 2
@@ -90,6 +93,7 @@ class pevnost:
 
 class pisarska_dilna:
     farba = "zelena"
+    symbol = "brko"
     body = 0
     peniaze = 0
     cena = 2
@@ -226,6 +230,7 @@ class kasarna:
 
 class knihovna:
     farba = "zelena"
+    symbol = "brko"
     body = 2
     peniaze = 0
     cena = ["KDS", "Pisarska_dilna"]
@@ -233,6 +238,7 @@ class knihovna:
 
 class labolator:
     farba = "zelena"
+    symbol = "triangel"
     body = 1
     peniaze = 0
     cena = "DSS"
@@ -247,6 +253,7 @@ class lukostrelnice:
 
 class osetrovna:
     farba = "zelena"
+    symbol = "miska"
     body = 2
     peniaze = 0
     cena = ["HHK", "Lekarnik"]
@@ -280,6 +287,7 @@ class recniste:
 
 class skola:
     farba = "zelena"
+    symbol = "koleso"
     body = 1
     peniaze = 0
     cena = "DPP"
@@ -315,6 +323,7 @@ class susirna:
 
 class akademie:
     farba = "zelena"
+    symbol = "hodiny"
     body = 3
     peniaze = 0
     cena = "KDSS"
@@ -322,6 +331,7 @@ class akademie:
 
 class observator:
     farba = "zelena"
+    symbol = "globus"
     body = 2
     peniaze = 0
     cena = ["KPP", "Labolator"]
@@ -329,6 +339,7 @@ class observator:
 
 class studovna:
     farba = "zelena"
+    symbol = "hodiny"
     body = 3
     peniaze = 0
     cena = "DDSP"
@@ -336,6 +347,7 @@ class studovna:
 
 class univerzita:
     farba = "zelena"
+    symbol = "globus"
     body = 2
     peniaze = 0
     cena = ["HSP", "Skola"]
