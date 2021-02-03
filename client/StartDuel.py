@@ -20,7 +20,7 @@ ja_som = "Jan"
 logging.basicConfig(filename=f'logs/gamelog_{hra_id}_{ja_som}.log',
                     filemode='a',
                     format='%(levelname)s: %(funcName)s() at line %(lineno)d: %(message)s',
-                    level=logging.DEBUG)
+                    level=logging.INFO)
 
 net = Network(hrac=ja_som, hra_id=hra_id)
 

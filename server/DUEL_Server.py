@@ -5,10 +5,9 @@ import json
 import glob
 import random
 
-
 #   vytvor TCP server
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-server = '192.168.0.105'
+server = '0.0.0.0'
 port = 5555
 server_ip = socket.gethostbyname(server)
 try:
@@ -33,11 +32,11 @@ def threaded_client(conn, addr):
     conn.send(str.encode(welcome_message))
 
     open_games = []
-    for game in glob.glob("archiv_hier/input_metadata_??????.json"):
+    for game in glob.glob("./archiv_hier/input_metadata_??????.json"):
         open_games.append(game[27:33])
 
     if hra_id in open_games:
-        with open(f"archiv_hier/input_metadata_{hra_id}.json") as m:
+        with open(f"./archiv_hier/input_metadata_{hra_id}.json") as m:
             metadata = json.load(m)
 
             if pocet_hracov == 1:
@@ -48,7 +47,7 @@ def threaded_client(conn, addr):
 
     else:
         if pocet_hracov == 1:
-            with open("meta/default_metadata.json") as m:
+            with open("./meta/default_metadata.json") as m:
                 metadata = json.load(m)
                 metadata["hraci_mena"][0] = meno
                 metadata["hraci_mena"][1] = "?"
@@ -82,7 +81,6 @@ def threaded_client(conn, addr):
             conn.sendall(reply)
         except:
             break
-
 
 # cakam na prveho hraca
 while True:
