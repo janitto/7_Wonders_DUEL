@@ -529,8 +529,7 @@ class SevenWondersPrvyVek:
     def zvol_mozosti(self, zvolena_karta):
         cv2.namedWindow("Zvolena karta.")
         zvolena_karta_pozadie = np.zeros((karta_vyska * 3, karta_sirka * 6, 3), np.uint8)
-        zvolena_karta_img = najdi_kartu(zvolena_karta)
-        zvolena_karta_img = cv2.resize(zvolena_karta_img, (karta_sirka * 2, karta_vyska * 2))
+        zvolena_karta_img = najdi_kartu(zvolena_karta, karta_sirka=karta_sirka*2, karta_vyska=karta_vyska*2)
         zvolena_karta_pozadie[50:50+(karta_vyska*2), 20:20+(karta_sirka*2)] = zvolena_karta_img
         cv2.putText(zvolena_karta_pozadie, "(o) Odhod", (int(karta_sirka * 2.5), 90), cv2.FONT_HERSHEY_COMPLEX, 0.7, (0, 0, 255), 1)
         cv2.putText(zvolena_karta_pozadie, "(k) Kup", (int(karta_sirka * 2.5), 150), cv2.FONT_HERSHEY_COMPLEX, 0.7, (0, 0, 255), 1)
@@ -857,10 +856,12 @@ class SevenWondersPrvyVek:
                 exec(f"self.hrac_{hrac}_suroviny.append('{sur}')")
         #   boje
 
-        #   ak vlastnim token Strategie, zosilnim boje
-        if "Strategie" in eval(f"self.hrac_{hrac}_tokeny"):
-            boje_gain += 1
-            logging.info(f"Vlastnim token Strategie, zosilnil som ucinok bojov o 1.")
+        #   ak vlastnim token Strategie, zosilnim boje tym kartam, ktore davaju boje, vynimka su divy
+        if boje_gain != 0:
+            if eval("self." + meno_karty.lower() + ".farba") != "div":
+                if "Strategie" in eval(f"self.hrac_{hrac}_tokeny"):
+                    boje_gain += 1
+                    logging.info(f"Vlastnim token Strategie, zosilnil som ucinok bojov o 1.")
 
         if hrac == 1:   self.boje_stav = self.boje_stav + boje_gain
         if hrac == 2:   self.boje_stav = self.boje_stav - boje_gain
@@ -998,13 +999,17 @@ class SevenWondersPrvyVek:
         key = cv2.waitKey()
         if chr(key) in validne_klavesy:
             logging.info(f"Oponentovi rusim: {hracove_karty[int(chr(key))]}")
+            #   rusim kartu
             eval(f"self.hrac_{hrac}_karty.remove('{hracove_karty[int(chr(key))]}')")
+            #   rusim suroviny
+            suroviny = eval(f"self.{hracove_karty[int(chr(key))].lower()}.suroviny")
+            eval(f"self.hrac_{hrac}_suroviny.remove('{suroviny}')")
+            #   pridavam do diskartu
+            eval(f"self.odhodene_karty.append('{hracove_karty[int(chr(key))]}')")
             cv2.destroyWindow("Hracove karty")
         else:
             logging.error(f"Volba {chr(key)} nie je povolena. Vyber z {validne_klavesy}. Znova.")
             ukaz_error("nespravna_volba")
-            self.aktivny_hrac = self.naposledy_hral
-            self.tah = self.tah - 1
             cv2.destroyWindow("Hracove karty")
             cv2.destroyWindow("Vyber div")
 
@@ -1216,17 +1221,19 @@ class SevenWondersDruhyVek:
 
         # nacitaj metadata
         self.read_from_meta()
-
-        #   druhy vek zacina ten, na koho strane su boje, teda posledny aktivny bol oponent.
-        if self.boje_stav < 9:
-            logging.info(f"Vek 2 zacne {self.hraci_mena[0]}")
-            self.aktivny_hrac = self.hraci_mena[1]
-        elif self.boje_stav > 9:
-            logging.info(f"Vek 2 zacne {self.hraci_mena[1]}")
-            self.aktivny_hrac = self.hraci_mena[0]
+        #   druhy vek (tah 20) !zacina! ten, na koho strane su boje, teda posledny aktivny bol oponent.
+        if self.tah == 20:
+            if self.boje_stav < 9:
+                logging.info(f"Vek 2 zacne {self.hraci_mena[0]}")
+                self.aktivny_hrac = self.hraci_mena[1]
+            elif self.boje_stav > 9:
+                logging.info(f"Vek 2 zacne {self.hraci_mena[1]}")
+                self.aktivny_hrac = self.hraci_mena[0]
+            else:
+                self.aktivny_hrac = nasledujuci_hrac(self.naposledy_hral, self.hraci_mena)
         else:
             self.aktivny_hrac = self.naposledy_hral
-        #   odosielanie informacie do metadat
+            #   odosielanie informacie do metadat
         self.metadata_to_json()
 
         #   Ak je moznost vyberu karty, nakresli vek.
@@ -1654,8 +1661,7 @@ class SevenWondersDruhyVek:
     def zvol_mozosti(self, zvolena_karta):
         cv2.namedWindow("Zvolena karta.")
         zvolena_karta_pozadie = np.zeros((karta_vyska * 3, karta_sirka * 6, 3), np.uint8)
-        zvolena_karta_img = najdi_kartu(zvolena_karta)
-        zvolena_karta_img = cv2.resize(zvolena_karta_img, (karta_sirka * 2, karta_vyska * 2))
+        zvolena_karta_img = najdi_kartu(zvolena_karta, karta_sirka=karta_sirka*2, karta_vyska=karta_vyska*2)
         zvolena_karta_pozadie[50:50+(karta_vyska*2), 20:20+(karta_sirka*2)] = zvolena_karta_img
         cv2.putText(zvolena_karta_pozadie, "(o) Odhod", (int(karta_sirka * 2.5), 90), cv2.FONT_HERSHEY_COMPLEX, 0.7, (0, 0, 255), 1)
         cv2.putText(zvolena_karta_pozadie, "(k) Kup", (int(karta_sirka * 2.5), 150), cv2.FONT_HERSHEY_COMPLEX, 0.7, (0, 0, 255), 1)
@@ -2081,10 +2087,12 @@ class SevenWondersDruhyVek:
                 exec(f"self.hrac_{hrac}_suroviny.append('{sur}')")
         #   boje
 
-        #   ak vlastnim token Strategie, zosilnim boje
-        if "Strategie" in eval(f"self.hrac_{hrac}_tokeny"):
-            boje_gain += 1
-            logging.info(f"Vlastnim token Strategie, zosilnil som ucinok bojov o 1.")
+        #   ak vlastnim token Strategie, zosilnim boje tym kartam, ktore davaju boje, vynimka su divy
+        if boje_gain != 0:
+            if eval("self." + meno_karty.lower() + ".farba") != "div":
+                if "Strategie" in eval(f"self.hrac_{hrac}_tokeny"):
+                    boje_gain += 1
+                    logging.info(f"Vlastnim token Strategie, zosilnil som ucinok bojov o 1.")
 
         if hrac == 1:   self.boje_stav = self.boje_stav + boje_gain
         if hrac == 2:   self.boje_stav = self.boje_stav - boje_gain
@@ -2232,7 +2240,13 @@ class SevenWondersDruhyVek:
         key = cv2.waitKey()
         if chr(key) in validne_klavesy:
             logging.info(f"Oponentovi rusim: {hracove_karty[int(chr(key))]}")
+            #   rusim kartu
             eval(f"self.hrac_{hrac}_karty.remove('{hracove_karty[int(chr(key))]}')")
+            #   rusim suroviny
+            suroviny = eval(f"self.{hracove_karty[int(chr(key))].lower()}.suroviny")
+            eval(f"self.hrac_{hrac}_suroviny.remove('{suroviny}')")
+            #   pridavam do diskartu
+            eval(f"self.odhodene_karty.append('{hracove_karty[int(chr(key))]}')")
             cv2.destroyWindow("Hracove karty")
         else:
             logging.error(f"Volba {chr(key)} nie je povolena. Vyber z {validne_klavesy}. Znova.")
@@ -2412,17 +2426,19 @@ class SevenWondersTretiVek:
 
         # nacitaj metadata
         self.read_from_meta()
-
-        #   druhy vek zacina ten, na koho strane su boje, teda posledny aktivny bol oponent.
-        if self.boje_stav < 9:
-            logging.info(f"Vek 2 zacne {self.hraci_mena[0]}")
-            self.aktivny_hrac = self.hraci_mena[1]
-        elif self.boje_stav > 9:
-            logging.info(f"Vek 2 zacne {self.hraci_mena[1]}")
-            self.aktivny_hrac = self.hraci_mena[0]
+        #   treti vek (tah 40) !zacina! ten, na koho strane su boje, teda posledny aktivny bol oponent.
+        if self.tah == 40:
+            if self.boje_stav < 9:
+                logging.info(f"Vek 2 zacne {self.hraci_mena[0]}")
+                self.aktivny_hrac = self.hraci_mena[1]
+            elif self.boje_stav > 9:
+                logging.info(f"Vek 2 zacne {self.hraci_mena[1]}")
+                self.aktivny_hrac = self.hraci_mena[0]
+            else:
+                self.aktivny_hrac = nasledujuci_hrac(self.naposledy_hral, self.hraci_mena)
         else:
-            pass
-        #   odosielanie informacie do metadat
+            self.aktivny_hrac = self.naposledy_hral
+            #   odosielanie informacie do metadat
         self.metadata_to_json()
 
         #   Ak je moznost vyberu karty, nakresli vek.
@@ -2775,7 +2791,7 @@ class SevenWondersTretiVek:
                 img[cerveny_okraj:cerveny_okraj + karta_vyska,
                 self.hrac_2_lavy_okraj[3]:self.hrac_2_lavy_okraj[3] + karta_sirka] = karta_img
                 cerveny_okraj += 25
-            elif eval("self." + karta.lower() + ".farba") == "zelena":
+            elif eval("self." + karta.lower() + ".farba") == "zelena" or eval("self." + karta.lower() + ".farba") == "fialova":
                 img[zeleny_okraj:zeleny_okraj + karta_vyska,
                 self.hrac_2_lavy_okraj[4]:self.hrac_2_lavy_okraj[4] + karta_sirka] = karta_img
                 zeleny_okraj += 25
@@ -2919,8 +2935,7 @@ class SevenWondersTretiVek:
     def zvol_mozosti(self, zvolena_karta):
         cv2.namedWindow("Zvolena karta.")
         zvolena_karta_pozadie = np.zeros((karta_vyska * 3, karta_sirka * 6, 3), np.uint8)
-        zvolena_karta_img = najdi_kartu(zvolena_karta)
-        zvolena_karta_img = cv2.resize(zvolena_karta_img, (karta_sirka * 2, karta_vyska * 2))
+        zvolena_karta_img = najdi_kartu(zvolena_karta, karta_sirka=karta_sirka*2, karta_vyska=karta_vyska*2)
         zvolena_karta_pozadie[50:50+(karta_vyska*2), 20:20+(karta_sirka*2)] = zvolena_karta_img
         cv2.putText(zvolena_karta_pozadie, "(o) Odhod", (int(karta_sirka * 2.5), 90), cv2.FONT_HERSHEY_COMPLEX, 0.7, (0, 0, 255), 1)
         cv2.putText(zvolena_karta_pozadie, "(k) Kup", (int(karta_sirka * 2.5), 150), cv2.FONT_HERSHEY_COMPLEX, 0.7, (0, 0, 255), 1)
@@ -3057,11 +3072,16 @@ class SevenWondersTretiVek:
                 suroviny_mam.append("X")
                 logging.debug(f"Hrac vlastni Zednarstvi, do poolu surovin som pridal [X, X]")
 
-            #   ak mam token "Zednarstvi, ktory mi zlacnuje modre karty, pridam si 2 suroviny X do poolu"
+            #   ak mam div "Architektura pridam si 2 suroviny Y do poolu"
             if eval(f"self.{meno_karty.lower()}.farba") == "div" and "Architektura" in eval(f"self.hrac_{hrac}_tokeny"):
                 suroviny_mam.append("Y")
                 suroviny_mam.append("Y")
                 logging.debug(f"Hrac vlastni Architektura, do poolu surovin som pridal [Y, Y]")
+
+            # ak mam Forum, pridam
+
+
+            # ak mam Stanoviste Karavan, pridam
 
             for surovina in cena:
                 try:
@@ -3178,7 +3198,7 @@ class SevenWondersTretiVek:
             if meno_karty == "Pristav":
                 parameter = self.zrataj_karty(hrac, "hneda")
             elif meno_karty == "Arena":
-                parameter = "????"
+                parameter = self.zrataj_karty(hrac, "div")
             elif meno_karty == "Majak":
                 parameter = self.zrataj_karty(hrac, "zlta")
             elif meno_karty == "Obchodni_komora":
@@ -3258,7 +3278,7 @@ class SevenWondersTretiVek:
                 co_mam.append("X")
                 co_mam.append("X")
 
-            #   ak mam token "Zednarstvi, ktory mi zlacnuje modre karty, pridam si 2 suroviny X do poolu"
+            #   ak mam div Architektura, pridam si 2 suroviny YY do poolu"
             if eval(f"self.{meno_karty.lower()}.farba") == "div" and "Architektura" in eval(f"self.hrac_{hrac}_tokeny"):
                 co_mam.append("Y")
                 co_mam.append("Y")
@@ -3329,10 +3349,12 @@ class SevenWondersTretiVek:
                 exec(f"self.hrac_{hrac}_suroviny.append('{sur}')")
         #   boje
 
-        #   ak vlastnim token Strategie, zosilnim boje
-        if "Strategie" in eval(f"self.hrac_{hrac}_tokeny"):
-            boje_gain += 1
-            logging.info(f"Vlastnim token Strategie, zosilnil som ucinok bojov o 1.")
+        #   ak vlastnim token Strategie, zosilnim boje tym kartam, ktore davaju boje, vynimka su divy
+        if boje_gain != 0:
+            if eval("self." + meno_karty.lower() + ".farba") != "div":
+                if "Strategie" in eval(f"self.hrac_{hrac}_tokeny"):
+                    boje_gain += 1
+                    logging.info(f"Vlastnim token Strategie, zosilnil som ucinok bojov o 1.")
 
         if hrac == 1:   self.boje_stav = self.boje_stav + boje_gain
         if hrac == 2:   self.boje_stav = self.boje_stav - boje_gain
@@ -3484,13 +3506,17 @@ class SevenWondersTretiVek:
         key = cv2.waitKey()
         if chr(key) in validne_klavesy:
             logging.info(f"Oponentovi rusim: {hracove_karty[int(chr(key))]}")
+            #   rusim kartu
             eval(f"self.hrac_{hrac}_karty.remove('{hracove_karty[int(chr(key))]}')")
+            #   rusim suroviny
+            suroviny = eval(f"self.{hracove_karty[int(chr(key))].lower()}.suroviny")
+            eval(f"self.hrac_{hrac}_suroviny.remove('{suroviny}')")
+            #   pridavam do diskartu
+            eval(f"self.odhodene_karty.append('{hracove_karty[int(chr(key))]}')")
             cv2.destroyWindow("Hracove karty")
         else:
             logging.error(f"Volba {chr(key)} nie je povolena. Vyber z {validne_klavesy}. Znova.")
             ukaz_error("nespravna_volba")
-            self.aktivny_hrac = self.naposledy_hral
-            self.tah = self.tah - 1
             cv2.destroyWindow("Hracove karty")
             cv2.destroyWindow("Vyber div")
 
@@ -3601,9 +3627,19 @@ class SevenWondersTretiVek:
 
     def zrataj_karty(self, hrac, farba):
         count = 0
-        for meno_karty in eval("self.hrac_"+str(hrac)+"_karty"):
-            if eval("self."+meno_karty.lower()+".farba") == farba:
-                count = count +1
+        if farba != "div":
+            for meno_karty in eval("self.hrac_"+str(hrac)+"_karty"):
+                if eval("self."+meno_karty.lower()+".farba") == farba:
+                    count = count +1
+        elif farba == "div":
+            aktivne_divy = eval(f"self.hrac_{hrac}_divy_aktivne")
+            aktivne_divy = np.unique(aktivne_divy)
+            aktivne_divy = np.delete(aktivne_divy, 0)
+            aktivne_divy = aktivne_divy.tolist()
+            for meno_karty in aktivne_divy:
+                if eval("self."+meno_karty.lower()+".farba") == farba:
+                    count = count +1
+
         #logging.debug(f"{hrac} ma {count} kariet farby {farba}")
         return count
 
@@ -3705,7 +3741,7 @@ def ukaz_error(typ_erroru):
             cv2.waitKey(2500)
             cv2.destroyWindow("Error!")
 
-def najdi_kartu(karta_meno):
+def najdi_kartu(karta_meno, karta_sirka=karta_sirka, karta_vyska=karta_vyska):
     if os.path.exists(f"karty/vek_1/{karta_meno}.jpg"):
         karta_meno = cv2.imread(f"karty/vek_1/{karta_meno}.jpg")
         karta_meno = cv2.resize(karta_meno, (karta_sirka, karta_vyska))

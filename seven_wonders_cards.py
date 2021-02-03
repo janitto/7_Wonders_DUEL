@@ -356,8 +356,12 @@ class univerzita:
 class arena:
     farba = "zlta"
     body = 3
-    peniaze = "X"
+    peniaze = "?"
     cena = ["HKD", "Pivovar"]
+
+    @staticmethod
+    def vyrataj_penaznu_odmenu(x):
+        return (x * 2)
 
 class majak:
     farba = "zlta"
@@ -367,17 +371,17 @@ class majak:
 
     @staticmethod
     def vyrataj_penaznu_odmenu(x):
-        return (x * 2)
+        return (x)
 
 class obchodni_komora:
     farba = "zlta"
     body = 3
-    peniaze = "X"
+    peniaze = "?"
     cena = "PP"
 
     @staticmethod
     def vyrataj_penaznu_odmenu(x):
-        return (x * 2)
+        return (x * 3)
 
 class obelisk:
     farba = "modra"
@@ -463,12 +467,12 @@ class zavodiste:
 class zbrojnice:
     farba = "zlta"
     body = 3
-    peniaze = "X"
+    peniaze = "?"
     cena = "KKS"
 
     @staticmethod
     def vyrataj_penaznu_odmenu(x):
-        return (x * 2)
+        return (x)
 
 ####### cechy #######
 

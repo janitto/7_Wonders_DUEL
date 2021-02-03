@@ -24,7 +24,7 @@ metadata = {}
 
 def threaded_client(conn, addr):
     global pocet_hracov, metadata
-    data = conn.recv(2048)
+    data = conn.recv(4000)
     pocet_hracov += 1
     meno = data.decode("utf-8").split(":")[1]
     hra_id = data.decode("utf-8").split(":")[0]
@@ -52,17 +52,19 @@ def threaded_client(conn, addr):
                 metadata = json.load(m)
                 metadata["hraci_mena"][0] = meno
                 metadata["hraci_mena"][1] = "?"
-        else:
+        elif pocet_hracov == 2:
             metadata["hraci_mena"][1] = meno
             #   hru zacina nahodny hrac
             nahodny_hrac = random.randrange(2)
             metadata["naposledy_hral"] = metadata["hraci_mena"][nahodny_hrac]
+        else:
+            pass
 
 
 
     while True:
         try:
-            data = conn.recv(2048)
+            data = conn.recv(4000)
             data = pickle.loads(data)
             if not data:
                 conn.send(str.encode("Goodbye"))

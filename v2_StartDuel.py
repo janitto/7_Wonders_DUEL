@@ -14,7 +14,7 @@ def generate_game_id():
     return randomstring
 
 hra_id = generate_game_id()
-hra_id = "YRX7DP"
+hra_id = "abcdef"
 ja_som = "Jan"
 
 logging.basicConfig(filename=f'logs/gamelog_{hra_id}_{ja_som}.log',
