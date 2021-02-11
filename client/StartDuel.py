@@ -3,7 +3,7 @@ import random
 import logging
 from time import sleep
 from DUEL_Network import Network
-
+import argparse
 
 def generate_game_id():
     characters = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
@@ -13,20 +13,27 @@ def generate_game_id():
         randomstring += random.choice(characters)
     return randomstring
 
-hra_id = generate_game_id()
-hra_id = "abcdef"
-ja_som = "Jan"
+parser = argparse.ArgumentParser(description='Potrebne data k hre.')
+parser.add_argument('meno', help='Meno hraca', type=str)
+parser.add_argument('--hra_id', help='Hra ID', type=str)
+args = parser.parse_args()
+
+if args.hra_id is None:
+    hra_id = generate_game_id()
+else:
+    hra_id = args.hra_id
+ja_som = args.meno
 
 logging.basicConfig(filename=f'logs/gamelog_{hra_id}_{ja_som}.log',
                     filemode='a',
                     format='%(levelname)s: %(funcName)s() at line %(lineno)d: %(message)s',
-                    level=logging.INFO)
+                    level=logging.DEBUG)
 
 net = Network(hrac=ja_som, hra_id=hra_id)
 
 while True:
     metadata = net.get()
-    print("Cakam na oponenta")
+    print("Cakam na oponenta. Hra ID:", hra_id)
     if "?" not in metadata["hraci_mena"]:
         print("Oponent najdeny. Hra zacina.")
         break

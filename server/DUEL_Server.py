@@ -23,7 +23,7 @@ metadata = {}
 
 def threaded_client(conn, addr):
     global pocet_hracov, metadata
-    data = conn.recv(4000)
+    data = conn.recv(4096)
     pocet_hracov += 1
     meno = data.decode("utf-8").split(":")[1]
     hra_id = data.decode("utf-8").split(":")[0]
@@ -32,11 +32,13 @@ def threaded_client(conn, addr):
     conn.send(str.encode(welcome_message))
 
     open_games = []
-    for game in glob.glob("./archiv_hier/input_metadata_??????.json"):
+    for game in glob.glob("archiv_hier/input_metadata_??????.json"):
         open_games.append(game[27:33])
 
+    print("Open games", open_games)
     if hra_id in open_games:
-        with open(f"./archiv_hier/input_metadata_{hra_id}.json") as m:
+        print(f"Hra {hra_id} exituje. Obnovujem...")
+        with open(f"archiv_hier/input_metadata_{hra_id}.json") as m:
             metadata = json.load(m)
 
             if pocet_hracov == 1:
@@ -46,8 +48,9 @@ def threaded_client(conn, addr):
                 metadata["hraci_mena"][1] = meno
 
     else:
+        print(f"Hra {hra_id} je nova.")
         if pocet_hracov == 1:
-            with open("./meta/default_metadata.json") as m:
+            with open("meta/default_metadata.json") as m:
                 metadata = json.load(m)
                 metadata["hraci_mena"][0] = meno
                 metadata["hraci_mena"][1] = "?"
@@ -59,11 +62,9 @@ def threaded_client(conn, addr):
         else:
             pass
 
-
-
     while True:
         try:
-            data = conn.recv(4000)
+            data = conn.recv(9999)
             data = pickle.loads(data)
             if not data:
                 conn.send(str.encode("Goodbye"))
@@ -78,6 +79,7 @@ def threaded_client(conn, addr):
                     reply = pickle.dumps(metadata)
                 else:
                     reply = pickle.dumps(metadata)
+            print("Odosielam bajty pre", meno, len(reply))
             conn.sendall(reply)
         except:
             break
