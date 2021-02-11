@@ -2467,6 +2467,8 @@ class SevenWondersTretiVek:
         self.aktivny_hrac = self.naposledy_hral
         self.metadata_to_json()
 
+        self.vyhodnot_hru()
+
         #   Ak je moznost vyberu karty, nakresli vek.
         while True:
             self.read_from_meta()
@@ -2518,27 +2520,33 @@ class SevenWondersTretiVek:
                 logging.info("Koniec veku 3. Koniec hry. Vyhodnocujem.")
                 break
 
-        self.dopln_body()
-        self.metadata_to_json()
         self.vyhodnot_hru()
 
     def dopln_body(self):
+        hrac_1_fialove_body = 0
+        hrac_2_fialove_body = 0
+        hrac_1_tokeny_body = 0
+        hrac_2_tokeny_body = 0
         if "Cech_lichvaru" in self.hrac_1_karty:
             if self.hrac_1_peniaze > self.hrac_2_peniaze:
                 self.hrac_1_body += int(self.hrac_1_peniaze / 3)
+                hrac_1_fialove_body += int(self.hrac_1_peniaze / 3)
                 logging.debug(
                     f"Hrac {self.hraci_mena[0]} ziskala kvoli Cechu lichvaru {int(self.hrac_1_peniaze / 3)} bodov.")
             else:
                 self.hrac_1_body += int(self.hrac_2_peniaze / 3)
+                hrac_1_fialove_body += int(self.hrac_2_peniaze / 3)
                 logging.debug(
                     f"Hrac {self.hraci_mena[0]} ziskala kvoli Cechu lichvaru {int(self.hrac_2_peniaze / 3)} bodov.")
         if "Cech_lichvaru" in self.hrac_2_karty:
             if self.hrac_1_peniaze > self.hrac_2_peniaze:
                 self.hrac_2_body += int(self.hrac_1_peniaze / 3)
+                hrac_2_fialove_body += int(self.hrac_1_peniaze / 3)
                 logging.debug(
                     f"Hrac {self.hraci_mena[1]} ziskala kvoli Cechu lichvaru {int(self.hrac_1_peniaze / 3)} bodov.")
             else:
                 self.hrac_2_body += int(self.hrac_2_peniaze / 3)
+                hrac_2_fialove_body += int(self.hrac_2_peniaze / 3)
                 logging.debug(
                     f"Hrac {self.hraci_mena[1]} ziskala kvoli Cechu lichvaru {int(self.hrac_2_peniaze / 3)} bodov.")
 
@@ -2547,18 +2555,22 @@ class SevenWondersTretiVek:
             hrac_2_sivohnede = self.zrataj_karty(2, "siva") + self.zrataj_karty(2, "hneda")
             if hrac_1_sivohnede > hrac_2_sivohnede:
                 self.hrac_1_body += hrac_1_sivohnede
+                hrac_1_fialove_body += hrac_1_sivohnede
                 logging.debug(f"Hrac {self.hraci_mena[0]} ziskala kvoli Cechu lodaru {hrac_1_sivohnede} bodov.")
             else:
                 self.hrac_1_body += hrac_2_sivohnede
+                hrac_1_fialove_body += hrac_2_sivohnede
                 logging.debug(f"Hrac {self.hraci_mena[0]} ziskala kvoli Cechu lodaru {hrac_2_sivohnede} bodov.")
         if "Cech_lodaru" in self.hrac_2_karty:
             hrac_1_sivohnede = self.zrataj_karty(1, "siva") + self.zrataj_karty(1, "hneda")
             hrac_2_sivohnede = self.zrataj_karty(2, "siva") + self.zrataj_karty(2, "hneda")
             if hrac_1_sivohnede > hrac_2_sivohnede:
                 self.hrac_2_body += hrac_1_sivohnede
+                hrac_2_fialove_body += hrac_1_sivohnede
                 logging.debug(f"Hrac {self.hraci_mena[1]} ziskala kvoli Cechu lodaru {hrac_1_sivohnede} bodov.")
             else:
                 self.hrac_2_body += hrac_2_sivohnede
+                hrac_2_fialove_body += hrac_2_sivohnede
                 logging.debug(f"Hrac {self.hraci_mena[1]} ziskala kvoli Cechu lodaru {hrac_2_sivohnede} bodov.")
 
         if "Cech_obchodniku" in self.hrac_1_karty:
@@ -2566,18 +2578,22 @@ class SevenWondersTretiVek:
             hrac_2_zlte = self.zrataj_karty(2, "zlta")
             if hrac_1_zlte > hrac_2_zlte:
                 self.hrac_1_body += hrac_1_zlte
+                hrac_1_fialove_body += hrac_1_zlte
                 logging.debug(f"Hrac {self.hraci_mena[0]} ziskala kvoli Cechu obchodniku {hrac_1_zlte} bodov.")
             else:
                 self.hrac_1_body += hrac_2_zlte
+                hrac_1_fialove_body += hrac_2_zlte
                 logging.debug(f"Hrac {self.hraci_mena[0]} ziskala kvoli Cechu obchodniku {hrac_2_zlte} bodov.")
         if "Cech_obchodniku" in self.hrac_2_karty:
             hrac_1_zlte = self.zrataj_karty(1, "zlta")
             hrac_2_zlte = self.zrataj_karty(2, "zlta")
             if hrac_1_zlte > hrac_2_zlte:
                 self.hrac_2_body += hrac_1_zlte
+                hrac_2_fialove_body += hrac_1_zlte
                 logging.debug(f"Hrac {self.hraci_mena[1]} ziskala kvoli Cechu obchodniku {hrac_1_zlte} bodov.")
             else:
                 self.hrac_2_body += hrac_2_zlte
+                hrac_2_fialove_body += hrac_2_zlte
                 logging.debug(f"Hrac {self.hraci_mena[1]} ziskala kvoli Cechu obchodniku {hrac_2_zlte} bodov.")
 
         if "Cech_stavitelu" in self.hrac_1_karty:
@@ -2585,10 +2601,12 @@ class SevenWondersTretiVek:
             hrac_2_pocet_divov = self.zrataj_karty(2, "div")
             if hrac_1_pocet_divov > hrac_2_pocet_divov:
                 self.hrac_1_body += hrac_1_pocet_divov * 2
+                hrac_1_fialove_body += hrac_1_pocet_divov * 2
                 logging.debug(
                     f"Hrac {self.hraci_mena[0]} ziskala kvoli Cechu stavitelu {hrac_1_pocet_divov * 2} bodov.")
             else:
                 self.hrac_1_body += hrac_2_pocet_divov * 2
+                hrac_1_fialove_body += hrac_2_pocet_divov * 2
                 logging.debug(
                     f"Hrac {self.hraci_mena[0]} ziskala kvoli Cechu stavitelu {hrac_2_pocet_divov * 2} bodov.")
         if "Cech_stavitelu" in self.hrac_2_karty:
@@ -2596,10 +2614,12 @@ class SevenWondersTretiVek:
             hrac_2_pocet_divov = self.zrataj_karty(2, "div")
             if hrac_1_pocet_divov > hrac_2_pocet_divov:
                 self.hrac_2_body += hrac_1_pocet_divov * 2
+                hrac_2_fialove_body += hrac_1_pocet_divov * 2
                 logging.debug(
                     f"Hrac {self.hraci_mena[1]} ziskala kvoli Cechu stavitelu {hrac_1_pocet_divov * 2} bodov.")
             else:
                 self.hrac_2_body += hrac_2_pocet_divov * 2
+                hrac_2_fialove_body += hrac_2_pocet_divov * 2
                 logging.debug(
                     f"Hrac {self.hraci_mena[1]} ziskala kvoli Cechu stavitelu {hrac_2_pocet_divov * 2} bodov.")
 
@@ -2608,18 +2628,22 @@ class SevenWondersTretiVek:
             hrac_2_zelene = self.zrataj_karty(2, "zelena")
             if hrac_1_zelene > hrac_2_zelene:
                 self.hrac_1_body += hrac_1_zelene
+                hrac_1_fialove_body += hrac_1_zelene
                 logging.debug(f"Hrac {self.hraci_mena[0]} ziskala kvoli Cechu vedcu {hrac_1_zelene} bodov.")
             else:
                 self.hrac_1_body += hrac_2_zelene
+                hrac_1_fialove_body += hrac_2_zelene
                 logging.debug(f"Hrac {self.hraci_mena[0]} ziskala kvoli Cechu vedcu {hrac_2_zelene} bodov.")
         if "Cech_vedcu" in self.hrac_2_karty:
             hrac_1_zelene = self.zrataj_karty(1, "zelena")
             hrac_2_zelene = self.zrataj_karty(2, "zelena")
             if hrac_1_zelene > hrac_2_zelene:
                 self.hrac_2_body += hrac_1_zelene
+                hrac_2_fialove_body += hrac_1_zelene
                 logging.debug(f"Hrac {self.hraci_mena[1]} ziskala kvoli Cechu vedcu {hrac_1_zelene} bodov.")
             else:
                 self.hrac_2_body += hrac_2_zelene
+                hrac_2_fialove_body += hrac_2_zelene
                 logging.debug(f"Hrac {self.hraci_mena[1]} ziskala kvoli Cechu vedcu {hrac_2_zelene} bodov.")
 
         if "Cech_uredniku" in self.hrac_1_karty:
@@ -2627,18 +2651,22 @@ class SevenWondersTretiVek:
             hrac_2_modra = self.zrataj_karty(2, "modra")
             if hrac_1_modra > hrac_2_modra:
                 self.hrac_1_body += hrac_1_modra
+                hrac_1_fialove_body += hrac_1_modra
                 logging.debug(f"Hrac {self.hraci_mena[0]} ziskala kvoli Cechu uredniku {hrac_1_modra} bodov.")
             else:
                 self.hrac_1_body += hrac_2_modra
+                hrac_1_fialove_body += hrac_2_modra
                 logging.debug(f"Hrac {self.hraci_mena[0]} ziskala kvoli Cechu uredniku {hrac_2_modra} bodov.")
         if "Cech_uredniku" in self.hrac_2_karty:
             hrac_1_modra = self.zrataj_karty(1, "modra")
             hrac_2_modra = self.zrataj_karty(2, "modra")
             if hrac_1_modra > hrac_2_modra:
                 self.hrac_2_body += hrac_1_modra
+                hrac_2_fialove_body += hrac_1_modra
                 logging.debug(f"Hrac {self.hraci_mena[1]} ziskala kvoli Cechu uredniku {hrac_1_modra} bodov.")
             else:
                 self.hrac_2_body += hrac_2_modra
+                hrac_2_fialove_body += hrac_2_modra
                 logging.debug(f"Hrac {self.hraci_mena[1]} ziskala kvoli Cechu uredniku {hrac_2_modra} bodov.")
 
         if "Cech_taktiku" in self.hrac_1_karty:
@@ -2646,31 +2674,173 @@ class SevenWondersTretiVek:
             hrac_2_cervene = self.zrataj_karty(2, "cervena")
             if hrac_1_cervene > hrac_2_cervene:
                 self.hrac_1_body += hrac_1_cervene
+                hrac_1_fialove_body += hrac_1_cervene
                 logging.debug(f"Hrac {self.hraci_mena[0]} ziskala kvoli Cechu taktiku {hrac_1_cervene} bodov.")
             else:
                 self.hrac_1_body += hrac_2_cervene
+                hrac_1_fialove_body += hrac_2_cervene
                 logging.debug(f"Hrac {self.hraci_mena[0]} ziskala kvoli Cechu taktiku {hrac_2_cervene} bodov.")
         if "Cech_taktiku" in self.hrac_2_karty:
             hrac_1_cervene = self.zrataj_karty(1, "cervena")
             hrac_2_cervene = self.zrataj_karty(2, "cervena")
             if hrac_1_cervene > hrac_2_cervene:
                 self.hrac_2_body += hrac_1_cervene
+                hrac_2_fialove_body += hrac_1_cervene
                 logging.debug(f"Hrac {self.hraci_mena[1]} ziskala kvoli Cechu taktiku {hrac_1_cervene} bodov.")
             else:
                 self.hrac_2_body += hrac_2_cervene
+                hrac_2_fialove_body += hrac_2_cervene
                 logging.debug(f"Hrac {self.hraci_mena[1]} ziskala kvoli Cechu taktiku {hrac_2_cervene} bodov.")
 
         if "Matematika" in self.hrac_1_tokeny:
             pocet_tokeny = self.zrataj_karty(1, "token") * 3
             self.hrac_1_body += pocet_tokeny
-            logging.debug(f"Hrac {self.hraci_mena[0]} ziskal {pocet_tokeny * 3} bodov za token Matematika")
+            hrac_1_tokeny_body = pocet_tokeny
+            logging.debug(f"Hrac {self.hraci_mena[0]} ziskal {pocet_tokeny} bodov za token Matematika")
         if "Matematika" in self.hrac_2_tokeny:
             pocet_tokeny = self.zrataj_karty(2, "token") * 3
-            self.hrac_1_body += pocet_tokeny
-            logging.debug(f"Hrac {self.hraci_mena[1]} ziskal {pocet_tokeny * 3} bodov za token Matematika")
+            self.hrac_2_body += pocet_tokeny
+            hrac_2_tokeny_body = pocet_tokeny
+            logging.debug(f"Hrac {self.hraci_mena[1]} ziskal {pocet_tokeny} bodov za token Matematika")
+
+        self.metadata_to_json()
+        return hrac_1_fialove_body, hrac_2_fialove_body, hrac_1_tokeny_body, hrac_2_tokeny_body
 
     def vyhodnot_hru(self):
+        x_1 = 150
+        x_2 = 350
         scorecard = cv2.imread("karty/ine/scorecard.png")
+
+        #   modre karty
+        hrac_1_modre_body = 0
+        for karta in self.hrac_1_karty:
+            if eval("self." + karta.lower() + ".farba") == "modra":
+                body = eval("self." + karta.lower() + ".body")
+                hrac_1_modre_body += body
+        hrac_2_modre_body = 0
+        for karta in self.hrac_2_karty:
+            if eval("self." + karta.lower() + ".farba") == "modra":
+                body = eval("self." + karta.lower() + ".body")
+                hrac_2_modre_body += body
+
+        cv2.putText(scorecard, str(hrac_1_modre_body), (x_1, 150), cv2.FONT_HERSHEY_DUPLEX, 2, (0, 0, 0), 2)
+        cv2.putText(scorecard, str(hrac_2_modre_body), (x_2, 150), cv2.FONT_HERSHEY_DUPLEX, 2, (0, 0, 0), 2)
+
+        #   zelene karty
+        hrac_1_zelene_body = 0
+        for karta in self.hrac_1_karty:
+            if eval("self." + karta.lower() + ".farba") == "zelena":
+                body = eval("self." + karta.lower() + ".body")
+                hrac_1_zelene_body += body
+        hrac_2_zelene_body = 0
+        for karta in self.hrac_2_karty:
+            if eval("self." + karta.lower() + ".farba") == "zelena":
+                body = eval("self." + karta.lower() + ".body")
+                hrac_2_zelene_body += body
+        cv2.putText(scorecard, str(hrac_1_zelene_body), (x_1, 242), cv2.FONT_HERSHEY_DUPLEX, 2, (0, 0, 0), 2)
+        cv2.putText(scorecard, str(hrac_2_zelene_body), (x_2, 242), cv2.FONT_HERSHEY_DUPLEX, 2, (0, 0, 0), 2)
+
+        #   zlte karty
+        hrac_1_zlte_body = 0
+        for karta in self.hrac_1_karty:
+            if eval("self." + karta.lower() + ".farba") == "zlta":
+                body = eval("self." + karta.lower() + ".body")
+                hrac_1_zlte_body += body
+        hrac_2_zlte_body = 0
+        for karta in self.hrac_2_karty:
+            if eval("self." + karta.lower() + ".farba") == "zlta":
+                body = eval("self." + karta.lower() + ".body")
+                hrac_2_zlte_body += body
+        cv2.putText(scorecard, str(hrac_1_zlte_body), (x_1, 332), cv2.FONT_HERSHEY_DUPLEX, 2, (0, 0, 0), 2)
+        cv2.putText(scorecard, str(hrac_2_zlte_body), (x_2, 332), cv2.FONT_HERSHEY_DUPLEX, 2, (0, 0, 0), 2)
+
+        #   fialove karty
+        hrac_1_fialove_body, hrac_2_fialove_body, hrac_1_tokeny_body, hrac_2_tokeny_body = self.dopln_body()
+        cv2.putText(scorecard, str(hrac_1_fialove_body), (x_1, 424), cv2.FONT_HERSHEY_DUPLEX, 2, (0, 0, 0), 2)
+        cv2.putText(scorecard, str(hrac_2_fialove_body), (x_2, 424), cv2.FONT_HERSHEY_DUPLEX, 2, (0, 0, 0), 2)
+
+        #   divy
+        hrac_1_divy_body = 0
+        for karta in self.hrac_1_divy_aktivne:
+            if karta is not False:
+                if eval("self." + karta.lower() + ".farba") == "div":
+                    body = eval("self." + karta.lower() + ".body")
+                    hrac_1_divy_body += body
+        hrac_2_divy_body = 0
+        for karta in self.hrac_2_divy_aktivne:
+            if karta is not False:
+                if eval("self." + karta.lower() + ".farba") == "div":
+                    body = eval("self." + karta.lower() + ".body")
+                    hrac_2_divy_body += body
+        cv2.putText(scorecard, str(hrac_1_divy_body), (x_1, 512), cv2.FONT_HERSHEY_DUPLEX, 2, (0, 0, 0), 2)
+        cv2.putText(scorecard, str(hrac_2_divy_body), (x_2, 512), cv2.FONT_HERSHEY_DUPLEX, 2, (0, 0, 0), 2)
+
+        #   ekonomika
+        for karta in self.hrac_1_tokeny:
+            if eval("self." + karta.lower() + ".farba") == "token":
+                body = eval("self." + karta.lower() + ".body")
+                hrac_1_tokeny_body += body
+        for karta in self.hrac_2_tokeny:
+            if eval("self." + karta.lower() + ".farba") == "token":
+                body = eval("self." + karta.lower() + ".body")
+                hrac_2_tokeny_body += body
+        cv2.putText(scorecard, str(hrac_1_tokeny_body), (x_1, 602), cv2.FONT_HERSHEY_DUPLEX, 2, (0, 0, 0), 2)
+        cv2.putText(scorecard, str(hrac_2_tokeny_body), (x_2, 602), cv2.FONT_HERSHEY_DUPLEX, 2, (0, 0, 0), 2)
+
+        #   peniaze
+        hrac_1_peniaze_body = int(self.hrac_1_peniaze/3)
+        hrac_2_peniaze_body = int(self.hrac_2_peniaze/3)
+        cv2.putText(scorecard, str(hrac_1_peniaze_body), (x_1, 688), cv2.FONT_HERSHEY_DUPLEX, 2, (0, 0, 0), 2)
+        cv2.putText(scorecard, str(hrac_2_peniaze_body), (x_2, 688), cv2.FONT_HERSHEY_DUPLEX, 2, (0, 0, 0), 2)
+
+        #   boje
+        if self.boje_stav in (1,2,3):
+            hrac_1_boje_body = 10
+            hrac_2_boje_body = 0
+        elif self.boje_stav in (4,5,6):
+            hrac_1_boje_body = 5
+            hrac_2_boje_body = 0
+        elif self.boje_stav in (7,8):
+            hrac_1_boje_body = 2
+            hrac_2_boje_body = 0
+        elif self.boje_stav == 9:
+            hrac_1_boje_body = 0
+            hrac_2_boje_body = 0
+        elif self.boje_stav in (10,11):
+            hrac_1_boje_body = 0
+            hrac_2_boje_body = 2
+        elif self.boje_stav in (12,13,14):
+            hrac_1_boje_body = 0
+            hrac_2_boje_body = 2
+        elif self.boje_stav in (15,16,17):
+            hrac_1_boje_body = 0
+            hrac_2_boje_body = 10
+        else:
+            hrac_1_boje_body = 0
+            hrac_2_boje_body = 0
+        cv2.putText(scorecard, str(hrac_1_boje_body), (x_1, 781), cv2.FONT_HERSHEY_DUPLEX, 2, (0, 0, 0), 2)
+        cv2.putText(scorecard, str(hrac_2_boje_body), (x_2, 781), cv2.FONT_HERSHEY_DUPLEX, 2, (0, 0, 0), 2)
+
+        # total
+        hrac_1_total_body = hrac_1_modre_body + hrac_1_zelene_body + hrac_1_zlte_body + hrac_1_fialove_body + \
+                            hrac_1_divy_body + hrac_1_tokeny_body + hrac_1_peniaze_body + hrac_1_boje_body
+        hrac_2_total_body = hrac_2_modre_body + hrac_2_zelene_body + hrac_2_zlte_body + hrac_2_fialove_body + \
+                            hrac_2_divy_body + hrac_2_tokeny_body + hrac_2_peniaze_body + hrac_2_boje_body
+        cv2.putText(scorecard, str(hrac_1_total_body), (x_1+10, 856), cv2.FONT_HERSHEY_DUPLEX, 1.5, (0, 0, 0), 2)
+        cv2.putText(scorecard, str(hrac_2_total_body), (x_2+10, 856), cv2.FONT_HERSHEY_DUPLEX, 1.5, (0, 0, 0), 2)
+
+        #   mena
+        if hrac_1_total_body < hrac_2_total_body:
+            cv2.putText(scorecard, self.hraci_mena[0], (130, 60), cv2.FONT_HERSHEY_DUPLEX, 1, (0, 0, 0), 2)
+            cv2.putText(scorecard, self.hraci_mena[1], (330, 60), cv2.FONT_HERSHEY_DUPLEX, 1, (0, 153, 0), 2)
+        elif hrac_1_total_body > hrac_2_total_body:
+            cv2.putText(scorecard, self.hraci_mena[0], (130, 60), cv2.FONT_HERSHEY_DUPLEX, 1, (0, 153, 0), 2)
+            cv2.putText(scorecard, self.hraci_mena[1], (330, 60), cv2.FONT_HERSHEY_DUPLEX, 1, (0, 0, 0), 2)
+        else:
+            cv2.putText(scorecard, self.hraci_mena[0], (130, 60), cv2.FONT_HERSHEY_DUPLEX, 1, (0, 153, 0), 2)
+            cv2.putText(scorecard, self.hraci_mena[1], (330, 60), cv2.FONT_HERSHEY_DUPLEX, 1, (0, 153, 0), 2)
+
+        cv2.imwrite(f"ukoncene_hry/{self.hra_id}_vysledky.jpg", scorecard)
         cv2.imshow("Scorecard", scorecard)
         cv2.waitKey(0)
         cv2.destroyWindow("Scorecard")
@@ -3877,9 +4047,9 @@ def vyhra_na_boje(vitaz):
     sys.exit(0)
 
 def vyhra_na_symboly(vitaz):
-    vitazny_obrazok = cv2.imread("karty/ine/economy_winner.png")
-    cv2.putText(vitazny_obrazok, f"Vitaz: {vitaz}", (50, 100), cv2.FONT_HERSHEY_DUPLEX, 0.5, (0, 153, 0), 1)
-    cv2.imshow("Vitaz na symboly ekonomie", vitazny_obrazok)
+    vitazny_obrazok = cv2.imread("karty/ine/scientific-symbols.jpg")
+    cv2.putText(vitazny_obrazok, f"Vitaz: {vitaz}", (40, 651), cv2.FONT_HERSHEY_DUPLEX, 0.5, (0, 153, 0), 1)
+    cv2.imshow("Vitaz na vedecke symboly", vitazny_obrazok)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
     sys.exit(0)
