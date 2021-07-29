@@ -47,7 +47,7 @@ class SevenWondersPrvyVek:
     hrac_2_divy_aktivne = []
 
     def __init__(self, net, hra_id, ja_som):
-        #logging.info(f" Hra s ID: {hra_id} zacala.")
+        logging.info(f" Hra s ID: {hra_id} zacala.")
         self.net = net
         self.ja_som = ja_som
         self.lavy_okraj = []
@@ -75,9 +75,7 @@ class SevenWondersPrvyVek:
         self.zisti_rohy()
         self.vyber_herne_karty()
 
-        # nacitaj metadata
         self.read_from_meta()
-        #   definujem aktivneho hraca aby som mohol updatnut metadata (aby update nehodil error)
         self.aktivny_hrac = self.naposledy_hral
         self.metadata_to_json()
 
@@ -102,8 +100,6 @@ class SevenWondersPrvyVek:
                     else:
                         logging.error(f"Stlacena klavesa - {chr(key)} - je nevalidna. Validne klavesy su: {self.validne_karty()}")
                         ukaz_error("nespravna_volba")
-                        #self.aktivny_hrac = self.naposledy_hral
-                        #self.tah = self.tah - 1
                 else:
                     print("Hraje oponent... cakam...")
                     self.nakresli_vek(active=False)
@@ -529,13 +525,10 @@ class SevenWondersPrvyVek:
                     self.herne_karty_meno[self.herne_karty_alias.index(karta)] = None
                     self.herne_karty_alias[self.herne_karty_alias.index(karta)] = None
                     self.metadata_to_json()
-                    #self.tah = self.tah + 1
-                    #self.aktivny_hrac = nasledujuci_hrac(self.aktivny_hrac, self.hraci_mena)
+
         else:
             logging.error(f"Karta {self.herne_karty_meno[self.herne_karty_alias.index(karta)]} nie je plne odkryta, preto ju nie je mozne zahrat. Znova.")
             ukaz_error("nevalidna_karta")
-            self.aktivny_hrac = self.naposledy_hral
-            self.tah = self.tah - 1
 
     def zvol_mozosti(self, zvolena_karta):
         cv2.namedWindow("Zvolena karta.")
@@ -598,8 +591,6 @@ class SevenWondersPrvyVek:
             else:
                 logging.error(f"Kartu {meno_karty} si nemozem kupit. Nedostatok penazi. Zvol inu kartu.")
                 ukaz_error("nedostatok_penazi")
-                self.aktivny_hrac = self.naposledy_hral
-                self.tah = self.tah - 1
                 return "cancel"
 
         if akcia == "postav_div":
@@ -876,6 +867,8 @@ class SevenWondersPrvyVek:
         if hrac == 1:   self.boje_stav = self.boje_stav + boje_gain
         if hrac == 2:   self.boje_stav = self.boje_stav - boje_gain
         #   zrusim peniaze
+        if self.boje_stav < 0: self.boje_stav = 0
+        if self.boje_stav > 18: self.boje_stav = 18
         kolko_penazi_zrus = self.boje_zrus_peniaze[self.boje_stav]
         if kolko_penazi_zrus is not None:
             if eval(f"self.hrac_{oponent}_peniaze") < kolko_penazi_zrus:
@@ -935,12 +928,14 @@ class SevenWondersPrvyVek:
                 logging.info(f"{self.aktivny_hrac} ide znovu.")
                 if hrac == 1: self.aktivny_hrac = self.hraci_mena[1]
                 if hrac == 2: self.aktivny_hrac = self.hraci_mena[0]
-                #self.metadata_to_json(f"archiv_hier/input_metadata_{self.hra_id}.json")
             if efekt == "noefekt":
                 pass
             if efekt == "oponent-3p":
                 logging.info(f"Oponentovi odoberam 3 peniaze.")
-                exec(f"self.hrac_{oponent}_peniaze -= 3")
+                if eval(f"self.hrac_{oponent}_peniaze") < 3:
+                    exec(f"self.hrac_{oponent}_peniaze = 0")
+                else:
+                    exec(f"self.hrac_{oponent}_peniaze -= 3")
             if efekt == "vezmi_kartu_z_discartu":
                 if len(self.odhodene_karty) != 0:
                     self.vezmi_kartu_z_disartu(hrac)
@@ -1013,7 +1008,11 @@ class SevenWondersPrvyVek:
             eval(f"self.hrac_{hrac}_karty.remove('{hracove_karty[int(chr(key))]}')")
             #   rusim suroviny
             suroviny = eval(f"self.{hracove_karty[int(chr(key))].lower()}.suroviny")
-            eval(f"self.hrac_{hrac}_suroviny.remove('{suroviny}')")
+            if type(suroviny) == list:
+                for surovina in suroviny:
+                    eval(f"self.hrac_{hrac}_suroviny.remove('{surovina}')")
+            else:
+                eval(f"self.hrac_{hrac}_suroviny.remove('{suroviny}')")
             #   pridavam do diskartu
             eval(f"self.odhodene_karty.append('{hracove_karty[int(chr(key))]}')")
             cv2.destroyWindow("Hracove karty")
@@ -1053,8 +1052,6 @@ class SevenWondersPrvyVek:
         else:
             logging.error(f"Volba {chr(key)} nie je povolena. Vyber z {validne_klavesy}. Znova.")
             ukaz_error("nespravna_volba")
-            self.aktivny_hrac = self.naposledy_hral
-            self.tah = self.tah - 1
             cv2.destroyWindow("Neherne tokeny")
             cv2.destroyWindow("Vyber div")
 
@@ -1210,21 +1207,21 @@ class SevenWondersDruhyVek:
 
     myList = os.listdir("karty/vek_1")
     for karta in myList:
-        if os.path.splitext(karta)[1].lower() in ('.jpg', '.jpeg'):
+        if os.path.splitext(karta)[1].lower() == ".jpg":
             x = karta.split(".")[0].lower()
-            exec("%s = seven_wonders_cards.%s" % (x, x))
+            exec("%s = seven_wonders_cards.%s" % (x,x))
 
     myList = os.listdir("karty/vek_2")
     for karta in myList:
-        if os.path.splitext(karta)[1].lower() in ('.jpg', '.jpeg'):
+        if os.path.splitext(karta)[1].lower() == ".jpeg":
             x = karta.split(".")[0].lower()
-            exec("%s = seven_wonders_cards.%s" % (x, x))
+            exec("%s = seven_wonders_cards.%s" % (x,x))
 
     myList = os.listdir("karty/divy")
     for karta in myList:
         if os.path.splitext(karta)[1].lower() == ".jpeg":
             x = karta.split(".")[0].lower()
-            exec("%s = seven_wonders_divy.%s" % (x, x))
+            exec("%s = seven_wonders_divy.%s" % (x,x))
 
     myList = os.listdir("karty/tokeny")
     for karta in myList:
@@ -1271,9 +1268,11 @@ class SevenWondersDruhyVek:
 
             #   v druhej dobe sa uz da vyhrat na boje:
             if self.boje_stav <= 0:
+                self.nakresli_vek(active=False)
                 logging.info(f"Hrac {self.hraci_mena[1]} vyhral na boje.")
                 vyhra_na_boje(self.hraci_mena[1])
             elif self.boje_stav >= 18:
+                self.nakresli_vek(active=False)
                 logging.info(f"Hrac {self.hraci_mena[0]} vyhral na boje.")
                 vyhra_na_boje(self.hraci_mena[0])
             else:
@@ -2146,6 +2145,8 @@ class SevenWondersDruhyVek:
         if hrac == 1:   self.boje_stav = self.boje_stav + boje_gain
         if hrac == 2:   self.boje_stav = self.boje_stav - boje_gain
         #   zrusim peniaze
+        if self.boje_stav < 0: self.boje_stav = 0
+        if self.boje_stav > 18: self.boje_stav = 18
         kolko_penazi_zrus = self.boje_zrus_peniaze[self.boje_stav]
         if kolko_penazi_zrus is not None:
             if eval(f"self.hrac_{oponent}_peniaze") < kolko_penazi_zrus:
@@ -2210,7 +2211,10 @@ class SevenWondersDruhyVek:
                 pass
             if efekt == "oponent-3p":
                 logging.info(f"Oponentovi odoberam 3 peniaze.")
-                exec(f"self.hrac_{oponent}_peniaze -= 3")
+                if eval(f"self.hrac_{oponent}_peniaze") < 3:
+                    exec(f"self.hrac_{oponent}_peniaze = 0")
+                else:
+                    exec(f"self.hrac_{oponent}_peniaze -= 3")
             if efekt == "vezmi_kartu_z_discartu":
                 if len(self.odhodene_karty) != 0:
                     self.vezmi_kartu_z_disartu(hrac)
@@ -2283,7 +2287,11 @@ class SevenWondersDruhyVek:
             eval(f"self.hrac_{hrac}_karty.remove('{hracove_karty[int(chr(key))]}')")
             #   rusim suroviny
             suroviny = eval(f"self.{hracove_karty[int(chr(key))].lower()}.suroviny")
-            eval(f"self.hrac_{hrac}_suroviny.remove('{suroviny}')")
+            if type(suroviny) == list:
+                for surovina in suroviny:
+                    eval(f"self.hrac_{hrac}_suroviny.remove('{surovina}')")
+            else:
+                eval(f"self.hrac_{hrac}_suroviny.remove('{suroviny}')")
             #   pridavam do diskartu
             eval(f"self.odhodene_karty.append('{hracove_karty[int(chr(key))]}')")
             cv2.destroyWindow("Hracove karty")
@@ -2386,9 +2394,6 @@ class SevenWondersDruhyVek:
                 pass
             if efekt_tokenu == "pridaj_zeleny_symbol":
                 eval(f"self.hrac_{hrac}_symboly.append('zakon')")
-                if len(set(eval(f"self.hrac_{hrac}_symboly"))) == 6:
-                    logging.info(f"Hrac {hrac} vyhral na symboly ekonomie.")
-                    sys.exit(0)
             if efekt_tokenu == "zlacni_modre":
                 #   hotovo v mozem_kupit()
                 pass
@@ -2467,27 +2472,28 @@ class SevenWondersTretiVek:
         self.aktivny_hrac = self.naposledy_hral
         self.metadata_to_json()
 
-        self.vyhodnot_hru()
-
         #   Ak je moznost vyberu karty, nakresli vek.
         while True:
             self.read_from_meta()
 
             #   vyhra na symboly
-
             if len(set(self.hrac_1_symboly)) == 6:
-                logging.info(f"Hrac {self.hraci_mena[0]} vyhral na symboly ekonomie.")
-                vyhra_na_symboly(self.hraci_mena[0])
+                self.nakresli_vek(active=False)
+                logging.info(f"Hrac {self.hraci_mena[0]} vyhral na vedecke symboly.")
+                vyhra_na_symboly(self.hraci_mena[0], self.hrac_1_symboly)
 
             if len(set(self.hrac_2_symboly)) == 6:
-                logging.info(f"Hrac {self.hraci_mena[1]} vyhral na symboly ekonomie.")
-                vyhra_na_symboly(self.hraci_mena[1])
+                self.nakresli_vek(active=False)
+                logging.info(f"Hrac {self.hraci_mena[1]} vyhral na vedecke symboly.")
+                vyhra_na_symboly(self.hraci_mena[1], self.hrac_2_symboly)
 
             #   vyhra na boje:
             if self.boje_stav <= 0:
+                self.nakresli_vek(active=False)
                 logging.info(f"Hrac {self.hraci_mena[1]} vyhral na boje.")
                 vyhra_na_boje(self.hraci_mena[1])
             elif self.boje_stav >= 18:
+                self.nakresli_vek(active=False)
                 logging.info(f"Hrac {self.hraci_mena[0]} vyhral na boje.")
                 vyhra_na_boje(self.hraci_mena[0])
             else:
@@ -2518,6 +2524,8 @@ class SevenWondersTretiVek:
             else:
                 print("Skoncil vek.")
                 logging.info("Koniec veku 3. Koniec hry. Vyhodnocujem.")
+                if self.aktivny_hrac == self.ja_som:
+                    self.metadata_to_json()
                 break
 
         self.vyhodnot_hru()
@@ -2599,6 +2607,8 @@ class SevenWondersTretiVek:
         if "Cech_stavitelu" in self.hrac_1_karty:
             hrac_1_pocet_divov = self.zrataj_karty(1, "div")
             hrac_2_pocet_divov = self.zrataj_karty(2, "div")
+            print(hrac_1_pocet_divov)
+            print(hrac_2_pocet_divov)
             if hrac_1_pocet_divov > hrac_2_pocet_divov:
                 self.hrac_1_body += hrac_1_pocet_divov * 2
                 hrac_1_fialove_body += hrac_1_pocet_divov * 2
@@ -2795,26 +2805,26 @@ class SevenWondersTretiVek:
 
         #   boje
         if self.boje_stav in (1,2,3):
-            hrac_1_boje_body = 10
-            hrac_2_boje_body = 0
+            hrac_1_boje_body = 0
+            hrac_2_boje_body = 10
         elif self.boje_stav in (4,5,6):
-            hrac_1_boje_body = 5
-            hrac_2_boje_body = 0
+            hrac_1_boje_body = 0
+            hrac_2_boje_body = 5
         elif self.boje_stav in (7,8):
-            hrac_1_boje_body = 2
-            hrac_2_boje_body = 0
+            hrac_1_boje_body = 0
+            hrac_2_boje_body = 2
         elif self.boje_stav == 9:
             hrac_1_boje_body = 0
             hrac_2_boje_body = 0
         elif self.boje_stav in (10,11):
-            hrac_1_boje_body = 0
-            hrac_2_boje_body = 2
+            hrac_1_boje_body = 2
+            hrac_2_boje_body = 0
         elif self.boje_stav in (12,13,14):
-            hrac_1_boje_body = 0
-            hrac_2_boje_body = 2
+            hrac_1_boje_body = 5
+            hrac_2_boje_body = 0
         elif self.boje_stav in (15,16,17):
-            hrac_1_boje_body = 0
-            hrac_2_boje_body = 10
+            hrac_1_boje_body = 10
+            hrac_2_boje_body = 0
         else:
             hrac_1_boje_body = 0
             hrac_2_boje_body = 0
@@ -3110,7 +3120,7 @@ class SevenWondersTretiVek:
         #   nakresli boje
         h_okraj = int(monitor_vyska * 0.87)
         l_okraj = self.lavy_okraj[5] - 90
-        cv2.putText(img, "Boje", (self.lavy_okraj[14], h_okraj), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 204), 1)
+        cv2.putText(img, "Boje", (self.lavy_okraj[11]-150, h_okraj), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 204), 1)
         for x in range(0,19):
             if x in [0, 3, 6, 8, 9, 11, 14, 17]:
                 cv2.line(img, (l_okraj+15, h_okraj-15), (l_okraj+15, h_okraj+15), (0, 0, 204), 1)
@@ -3497,8 +3507,8 @@ class SevenWondersTretiVek:
             elif meno_karty == "Zbrojnice":
                 parameter = self.zrataj_karty(hrac, "cervena")
             elif meno_karty == "Cech_lodaru":
-                hrac_param = self.zrataj_karty(hrac, "hnede") + self.zrataj_karty(hrac, "sive")
-                oponent_param = self.zrataj_karty(oponent, "hnede") + self.zrataj_karty(oponent, "sive")
+                hrac_param = self.zrataj_karty(hrac, "hneda") + self.zrataj_karty(hrac, "siva")
+                oponent_param = self.zrataj_karty(oponent, "hneda") + self.zrataj_karty(oponent, "siva")
                 if hrac_param >= oponent_param:
                     parameter = hrac_param
                     logging.debug(f"Mam viac hnedych a sivych kariet ako oponent.")
@@ -3650,6 +3660,8 @@ class SevenWondersTretiVek:
         if hrac == 1:   self.boje_stav = self.boje_stav + boje_gain
         if hrac == 2:   self.boje_stav = self.boje_stav - boje_gain
         #   zrusim peniaze
+        if self.boje_stav < 0: self.boje_stav = 0
+        if self.boje_stav > 18: self.boje_stav = 18
         kolko_penazi_zrus = self.boje_zrus_peniaze[self.boje_stav]
         if kolko_penazi_zrus is not None:
             if eval(f"self.hrac_{oponent}_peniaze") < kolko_penazi_zrus:
@@ -3713,7 +3725,10 @@ class SevenWondersTretiVek:
                 pass
             if efekt == "oponent-3p":
                 logging.info(f"Oponentovi odoberam 3 peniaze.")
-                exec(f"self.hrac_{oponent}_peniaze -= 3")
+                if eval(f"self.hrac_{oponent}_peniaze") < 3:
+                    exec(f"self.hrac_{oponent}_peniaze = 0")
+                else:
+                    exec(f"self.hrac_{oponent}_peniaze -= 3")
             if efekt == "vezmi_kartu_z_discartu":
                 if len(self.odhodene_karty) != 0:
                     self.vezmi_kartu_z_disartu(hrac)
@@ -3786,7 +3801,11 @@ class SevenWondersTretiVek:
             eval(f"self.hrac_{hrac}_karty.remove('{hracove_karty[int(chr(key))]}')")
             #   rusim suroviny
             suroviny = eval(f"self.{hracove_karty[int(chr(key))].lower()}.suroviny")
-            eval(f"self.hrac_{hrac}_suroviny.remove('{suroviny}')")
+            if type(suroviny) == list:
+                for surovina in suroviny:
+                    eval(f"self.hrac_{hrac}_suroviny.remove('{surovina}')")
+            else:
+                eval(f"self.hrac_{hrac}_suroviny.remove('{suroviny}')")
             #   pridavam do diskartu
             eval(f"self.odhodene_karty.append('{hracove_karty[int(chr(key))]}')")
             cv2.destroyWindow("Hracove karty")
@@ -3890,11 +3909,8 @@ class SevenWondersTretiVek:
             if efekt_tokenu == "ak_zadarmo_potom+4p":
                 pass
             if efekt_tokenu == "pridaj_zeleny_symbol":
+                logging.debug(f"Pridavam symbol ZAKON medzi symboly.")
                 eval(f"self.hrac_{hrac}_symboly.append('zakon')")
-                if len(set(eval(f"self.hrac_{hrac}_symboly"))) == 6:
-                    logging.info(f"Hrac {hrac} vyhral na symboly ekonomie.")
-                    sys.exit(0)
-
             if efekt_tokenu == "zlacni_modre":
                 #   hotovo v mozem_kupit()
                 pass
@@ -3907,16 +3923,10 @@ class SevenWondersTretiVek:
                     count = count +1
         elif farba == "div":
             aktivne_divy = eval(f"self.hrac_{hrac}_divy_aktivne")
-            #aktivne_divy = np.unique(aktivne_divy)
-            #aktivne_divy = np.delete(aktivne_divy, 0)
-            #aktivne_divy = aktivne_divy.tolist()
             for meno_karty in aktivne_divy:
                 if meno_karty is not False:
                     if eval("self."+meno_karty.lower()+".farba") == farba:
                         count = count +1
-            count = count / 2
-
-        #logging.debug(f"{hrac} ma {count} kariet farby {farba}")
         return count
 
     def read_from_meta(self):
@@ -4046,9 +4056,11 @@ def vyhra_na_boje(vitaz):
     cv2.destroyAllWindows()
     sys.exit(0)
 
-def vyhra_na_symboly(vitaz):
+def vyhra_na_symboly(vitaz, symboly):
+    symboly = ' '.join([str(elem) for elem in symboly])
     vitazny_obrazok = cv2.imread("karty/ine/scientific-symbols.jpg")
     cv2.putText(vitazny_obrazok, f"Vitaz: {vitaz}", (40, 651), cv2.FONT_HERSHEY_DUPLEX, 0.5, (0, 153, 0), 1)
+    cv2.putText(vitazny_obrazok, symboly, (531, 651), cv2.FONT_HERSHEY_DUPLEX, 0.5, (0, 153, 0), 1)
     cv2.imshow("Vitaz na vedecke symboly", vitazny_obrazok)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
