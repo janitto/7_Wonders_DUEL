@@ -1,0 +1,3 @@
+This is my **masterpiece**. Version of popular game 7 Wonders DUEL written in Python, using openCV  
+  
+Further details later...
